@@ -13,6 +13,8 @@ from src.routes.analytics import analytics_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'changepreneurship-secret-key-2024-secure'
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
+app.config["SECRET_KEY"] = "changepreneurship-secret-key-2024-secure"
 
 # Enable CORS for all routes
 CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
@@ -48,4 +50,5 @@ def serve(path):
 
 
 if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=5000, debug=True)
