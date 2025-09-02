@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Progress } from '@/components/ui/progress.jsx'
@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label.jsx'
 import { Textarea } from '@/components/ui/textarea.jsx'
 import { Slider } from '@/components/ui/slider.jsx'
 import DragDropRanking from '@/components/ui/drag-drop-ranking.jsx'
-import AutoSaveManager, { useAutoSave } from '../AutoSaveManager'
 import { 
   Heart, 
   Target, 
@@ -25,7 +24,6 @@ import {
 } from 'lucide-react'
 import { useAssessment, ENTREPRENEUR_ARCHETYPES } from '../../contexts/AssessmentContext'
 import DataImportBanner from '../adaptive/DataImportBanner'
-import { SELF_DISCOVERY_QUESTIONS } from './ComprehensiveQuestionBank'
 
 const SelfDiscoveryAssessment = () => {
   const { 
@@ -41,32 +39,12 @@ const SelfDiscoveryAssessment = () => {
   const [showDataImport, setShowDataImport] = useState(true)
   const [isOptimized, setIsOptimized] = useState(false)
   const [connectedSources, setConnectedSources] = useState([])
-  const [errors, setErrors] = useState({})
   
   const selfDiscoveryData = assessmentData['self-discovery'] || {}
   const responses = selfDiscoveryData.responses || {}
 
-  // Auto-save functionality
-  const { save, saveStatus, AutoSaveComponent } = useAutoSave(
-    assessmentData,
-    async (data) => {
-      // Custom save function - could be API call
-      console.log('Saving assessment data:', data)
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    },
-    { saveInterval: 30000 } // Save every 30 seconds
-  )
-
-  // Memoize question data from comprehensive question bank
-  const motivationQuestions = useMemo(() => SELF_DISCOVERY_QUESTIONS.motivation, [])
-  const lifeImpactQuestions = useMemo(() => SELF_DISCOVERY_QUESTIONS['life-impact'], [])
-  const valuesQuestions = useMemo(() => SELF_DISCOVERY_QUESTIONS.values, [])
-  const visionQuestions = useMemo(() => SELF_DISCOVERY_QUESTIONS.vision, [])
-  const confidenceQuestions = useMemo(() => SELF_DISCOVERY_QUESTIONS.confidence, [])
-
-  // Memoize sections configuration to prevent re-creation
-  const sections = useMemo(() => [
+  // Assessment sections configuration
+  const sections = [
     {
       id: 'motivation',
       title: 'Core Motivation & Why',
@@ -115,91 +93,63 @@ const SelfDiscoveryAssessment = () => {
       duration: '5 minutes',
       questions: []
     }
-  ], [motivationQuestions, lifeImpactQuestions, valuesQuestions, visionQuestions, confidenceQuestions])
+  ]
 
   const currentSectionIndex = sections.findIndex(s => s.id === currentSection)
   const currentSectionData = sections[currentSectionIndex]
 
-  // Memoize response handler with error handling and validation
-  const handleResponse = useCallback((questionId, answer) => {
-    try {
-      // Clear any existing errors for this question
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors[questionId]
-        return newErrors
-      })
+  // Handle response updates
+  const handleResponse = (questionId, answer) => {
+    updateResponse('self-discovery', currentSection, questionId, answer)
+    
+    // Update section progress
+    const sectionQuestions = currentSectionData.questions
+    const sectionResponses = responses[currentSection] || {}
+    const answeredQuestions = Object.keys({ ...sectionResponses, [questionId]: answer }).length
+    const progress = (answeredQuestions / sectionQuestions.length) * 100
+    
+    setSectionProgress(prev => ({
+      ...prev,
+      [currentSection]: progress
+    }))
+  }
 
-      // Validate the answer
-      const currentSectionData = sections[currentSectionIndex]
-      const question = currentSectionData?.questions?.find(q => q.id === questionId)
-      
-      if (question?.required && (!answer || answer === '' || (Array.isArray(answer) && answer.length === 0))) {
-        setErrors(prev => ({
-          ...prev,
-          [questionId]: 'This question is required'
-        }))
-        return
-      }
-
-      updateResponse('self-discovery', currentSection, questionId, answer)
-      
-      // Update section progress
-      const sectionQuestions = currentSectionData?.questions || []
-      const sectionResponses = responses[currentSection] || {}
-      const answeredQuestions = Object.keys({ ...sectionResponses, [questionId]: answer }).length
-      const progress = sectionQuestions.length > 0 ? (answeredQuestions / sectionQuestions.length) * 100 : 0
-      
-      setSectionProgress(prev => ({
-        ...prev,
-        [currentSection]: progress
-      }))
-
-      // Trigger auto-save
-      save(assessmentData)
-    } catch (error) {
-      console.error('Error handling response:', error)
-      setErrors(prev => ({
-        ...prev,
-        [questionId]: 'Failed to save response. Please try again.'
-      }))
-    }
-  }, [updateResponse, currentSection, currentSectionIndex, responses, sections, save, assessmentData])
-
-  // Memoize optimization handler
-  const handleOptimization = useCallback((sources) => {
+  // Handle data import optimization
+  const handleOptimization = (sources) => {
     setConnectedSources(sources)
     setIsOptimized(true)
     setShowDataImport(false)
     
     // Simulate pre-population based on connected sources
     if (sources.includes('linkedin')) {
+      // Pre-populate work-related questions
       updateResponse('self-discovery', 'motivation', 'primary-motivation', 'solve-problems')
     }
     if (sources.includes('financial')) {
+      // Pre-populate financial confidence
       updateResponse('self-discovery', 'confidence', 'vision-confidence', 7)
     }
-  }, [updateResponse])
+  }
 
   // Navigation functions
-  const nextSection = useCallback(() => {
+  const nextSection = () => {
     if (currentSectionIndex < sections.length - 1) {
       setCurrentSection(sections[currentSectionIndex + 1].id)
     }
-  }, [currentSectionIndex, sections])
+  }
 
-  const previousSection = useCallback(() => {
+  const previousSection = () => {
     if (currentSectionIndex > 0) {
       setCurrentSection(sections[currentSectionIndex - 1].id)
     }
-  }, [currentSectionIndex, sections])
+  }
 
-  // Calculate overall progress with proper memoization
-  const overallProgress = useMemo(() => {
+  // Calculate overall progress
+  const calculateOverallProgress = () => {
     const totalSections = sections.length - 1 // Exclude results section
     const completedSections = Object.values(sectionProgress).filter(p => p === 100).length
     return Math.round((completedSections / totalSections) * 100)
-  }, [sectionProgress, sections.length])
+  }
 
   return (
     <div className="space-y-6">
@@ -234,18 +184,13 @@ const SelfDiscoveryAssessment = () => {
       {/* Progress Overview */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="h-5 w-5 text-primary" />
-                Self Discovery Assessment
-              </CardTitle>
-              <CardDescription>
-                Understand your entrepreneurial personality and motivations
-              </CardDescription>
-            </div>
-            <AutoSaveComponent />
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Heart className="h-5 w-5 text-primary" />
+            Self Discovery Assessment
+          </CardTitle>
+          <CardDescription>
+            Understand your entrepreneurial personality and motivations
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -274,9 +219,9 @@ const SelfDiscoveryAssessment = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Overall Progress</span>
-                <Badge variant="outline">{overallProgress}%</Badge>
+                <Badge variant="outline">{calculateOverallProgress()}%</Badge>
               </div>
-              <Progress value={overallProgress} className="flex-1 mx-4" />
+              <Progress value={calculateOverallProgress()} className="flex-1 mx-4" />
             </div>
           </div>
         </CardContent>
@@ -307,7 +252,6 @@ const SelfDiscoveryAssessment = () => {
               section={currentSectionData}
               responses={responses[currentSection] || {}}
               onResponse={handleResponse}
-              errors={errors}
             />
           )}
         </CardContent>
@@ -336,8 +280,8 @@ const SelfDiscoveryAssessment = () => {
 }
 
 // Section Questions Component
-const SectionQuestions = React.memo(({ section, responses, onResponse, errors = {} }) => {
-  if (!section?.questions || section.questions.length === 0) {
+const SectionQuestions = ({ section, responses, onResponse }) => {
+  if (!section.questions || section.questions.length === 0) {
     return <div className="text-center text-muted-foreground">No questions available for this section.</div>
   }
 
@@ -351,15 +295,14 @@ const SectionQuestions = React.memo(({ section, responses, onResponse, errors = 
           onResponse={(answer) => onResponse(question.id, answer)}
           questionNumber={index + 1}
           totalQuestions={section.questions.length}
-          error={errors[question.id]}
         />
       ))}
     </div>
   )
-})
+}
 
 // Individual Question Card Component
-const QuestionCard = React.memo(({ question, response, onResponse, questionNumber, totalQuestions, error }) => {
+const QuestionCard = ({ question, response, onResponse, questionNumber, totalQuestions }) => {
   const renderQuestionInput = () => {
     switch (question.type) {
       case 'multiple-choice':
@@ -409,7 +352,7 @@ const QuestionCard = React.memo(({ question, response, onResponse, questionNumbe
             onChange={(e) => onResponse(e.target.value)}
             placeholder={question.placeholder || 'Enter your response...'}
             rows={4}
-            className={`w-full ${error ? 'border-destructive' : ''}`}
+            className="w-full"
           />
         )
 
@@ -439,7 +382,7 @@ const QuestionCard = React.memo(({ question, response, onResponse, questionNumbe
   }
 
   return (
-    <Card className={`border-l-4 ${error ? 'border-l-destructive' : 'border-l-primary'}`}>
+    <Card className="border-l-4 border-l-primary">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -451,14 +394,8 @@ const QuestionCard = React.memo(({ question, response, onResponse, questionNumbe
             {question.description && (
               <CardDescription className="mt-2">{question.description}</CardDescription>
             )}
-            {error && (
-              <div className="mt-2 flex items-center gap-2 text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
           </div>
-          {response && !error && <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />}
+          {response && <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />}
         </div>
       </CardHeader>
       <CardContent>
@@ -474,14 +411,14 @@ const QuestionCard = React.memo(({ question, response, onResponse, questionNumbe
       </CardContent>
     </Card>
   )
-})
+}
 
 // Multiple Scale Input Component
-const MultipleScaleInput = React.memo(({ areas, scaleRange, value, onChange }) => {
-  const handleScaleChange = useCallback((area, scaleValue) => {
+const MultipleScaleInput = ({ areas, scaleRange, value, onChange }) => {
+  const handleScaleChange = (area, scaleValue) => {
     const newValue = { ...value, [area]: scaleValue }
     onChange(newValue)
-  }, [value, onChange])
+  }
 
   return (
     <div className="space-y-6">
@@ -505,10 +442,10 @@ const MultipleScaleInput = React.memo(({ areas, scaleRange, value, onChange }) =
       ))}
     </div>
   )
-})
+}
 
 // Archetype Results Component
-const ArchetypeResults = React.memo(({ archetype, insights }) => {
+const ArchetypeResults = ({ archetype, insights }) => {
   if (!archetype || !insights) {
     return (
       <div className="text-center py-8">
@@ -560,7 +497,94 @@ const ArchetypeResults = React.memo(({ archetype, insights }) => {
       </Card>
     </div>
   )
-})
+}
+
+// Question definitions
+const motivationQuestions = [
+  {
+    id: 'primary-motivation',
+    question: 'What is the main reason you want to start your own business?',
+    type: 'multiple-choice',
+    required: true,
+    options: [
+      { value: 'transform-world', label: 'Create something that changes the world', description: 'Build transformative solutions for the future' },
+      { value: 'solve-problems', label: 'Solve real problems I see everywhere', description: 'Fix immediate problems with practical solutions' },
+      { value: 'lifestyle-freedom', label: 'Have the lifestyle and freedom I want', description: 'Personal freedom and lifestyle alignment' },
+      { value: 'financial-security', label: 'Build financial security for my family', description: 'Stable income and asset building' },
+      { value: 'social-impact', label: 'Make a positive difference in the world', description: 'Social or environmental impact' },
+      { value: 'seize-opportunities', label: 'Capture market opportunities I see', description: 'Seize opportunities for profit' }
+    ]
+  },
+  {
+    id: 'success-vision',
+    question: 'When you imagine your business being successful, what does that look like?',
+    type: 'textarea',
+    required: true,
+    placeholder: 'Describe your vision of success in detail...',
+    helpText: 'Think about team size, daily life, impact, working hours, and what success means to you personally.'
+  },
+  {
+    id: 'risk-tolerance',
+    question: 'How comfortable are you with taking risks?',
+    type: 'scale',
+    required: true,
+    scaleRange: { min: 1, max: 10 },
+    scaleLabels: { min: 'Very Risk-Averse', max: 'High Risk Tolerance' },
+    helpText: 'Consider both financial and personal risks involved in starting a business.'
+  }
+]
+
+const lifeImpactQuestions = [
+  {
+    id: 'life-satisfaction',
+    question: 'Rate your current satisfaction in different life areas',
+    type: 'multiple-scale',
+    required: true,
+    areas: ['Health', 'Money', 'Family', 'Friends', 'Career', 'Growth', 'Recreation', 'Environment'],
+    scaleRange: { min: 1, max: 10 }
+  }
+]
+
+const valuesQuestions = [
+  {
+    id: 'top-values',
+    question: 'Rank these values in order of importance to you',
+    type: 'ranking',
+    required: true,
+    options: [
+      { value: 'financial-success', label: 'Financial Success' },
+      { value: 'personal-freedom', label: 'Personal Freedom' },
+      { value: 'family-time', label: 'Family Time' },
+      { value: 'making-difference', label: 'Making a Difference' },
+      { value: 'recognition', label: 'Recognition' },
+      { value: 'learning', label: 'Learning' },
+      { value: 'security', label: 'Security' },
+      { value: 'adventure', label: 'Adventure' }
+    ]
+  }
+]
+
+const visionQuestions = [
+  {
+    id: 'ten-year-vision',
+    question: 'Describe your ideal life 10 years from now',
+    type: 'textarea',
+    required: true,
+    placeholder: 'Paint a detailed picture of your future self...',
+    helpText: 'Include your age, how you feel, your identity, contributions, achievements, and relationships.'
+  }
+]
+
+const confidenceQuestions = [
+  {
+    id: 'vision-confidence',
+    question: 'How confident are you that you can achieve your 10-year vision?',
+    type: 'scale',
+    required: true,
+    scaleRange: { min: 1, max: 10 },
+    scaleLabels: { min: 'Not Confident', max: 'Very Confident' }
+  }
+]
 
 export default SelfDiscoveryAssessment
 

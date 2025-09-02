@@ -39,6 +39,8 @@ import BusinessPrototypeTesting from './components/assessment/BusinessPrototypeT
 import AIRecommendationsSimple from './components/AIRecommendationsSimple'
 import LandingPage from './components/LandingPage'
 import UserDashboard from './components/dashboard/UserDashboard'
+import AdaptiveDemo from './components/AdaptiveDemo'
+import SimpleAdaptiveDemo from './components/SimpleAdaptiveDemo'
 
 const AssessmentPage = () => {
   const { assessmentData, updateAssessmentData, currentPhase, updatePhase } = useAssessment()
@@ -247,6 +249,8 @@ function App() {
               <Route path="/assessment" element={<AssessmentPage />} />
               <Route path="/ai-recommendations" element={<AIRecommendationsSimple />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route path="/adaptive-demo" element={<AdaptiveDemo />} />
+              <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
