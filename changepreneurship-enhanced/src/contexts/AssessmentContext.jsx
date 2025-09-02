@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
 
-// Initial state
+// Initial state with all seven assessment phases
 const initialState = {
   currentPhase: 'self-discovery',
   assessmentData: {
@@ -23,14 +23,45 @@ const initialState = {
       progress: 0,
       responses: {},
       competitorAnalysis: {},
-      marketValidation: {}
+      marketValidation: {},
+      targetMarket: {},
+      marketSize: {}
     },
     'business-pillars': {
       completed: false,
       progress: 0,
       responses: {},
       customerSegment: {},
-      businessPlan: {}
+      businessPlan: {},
+      valueProposition: {},
+      revenueModel: {}
+    },
+    'product-concept-testing': {
+      completed: false,
+      progress: 0,
+      responses: {},
+      conceptTests: [],
+      customerFeedback: {},
+      productValidation: {},
+      pricingStrategy: {}
+    },
+    'business-development': {
+      completed: false,
+      progress: 0,
+      responses: {},
+      strategicDecisions: {},
+      resourceAllocation: {},
+      partnerships: {},
+      growthStrategy: {}
+    },
+    'business-prototype-testing': {
+      completed: false,
+      progress: 0,
+      responses: {},
+      prototypeResults: {},
+      marketTesting: {},
+      businessModelValidation: {},
+      scalingPlan: {}
     }
   },
   userProfile: {
@@ -55,10 +86,11 @@ const ACTIONS = {
   CALCULATE_ARCHETYPE: 'CALCULATE_ARCHETYPE',
   SAVE_OPPORTUNITY: 'SAVE_OPPORTUNITY',
   UPDATE_INSIGHTS: 'UPDATE_INSIGHTS',
-  RESET_ASSESSMENT: 'RESET_ASSESSMENT'
+  RESET_ASSESSMENT: 'RESET_ASSESSMENT',
+  BULK_UPDATE_PHASE_DATA: 'BULK_UPDATE_PHASE_DATA'
 }
 
-// Reducer function
+// Reducer function with enhanced phase handling
 function assessmentReducer(state, action) {
   switch (action.type) {
     case ACTIONS.UPDATE_PHASE:
@@ -69,6 +101,27 @@ function assessmentReducer(state, action) {
 
     case ACTIONS.UPDATE_RESPONSE:
       const { phase, questionId, answer, section } = action.payload
+      
+      // Ensure the phase exists in assessmentData
+      if (!state.assessmentData[phase]) {
+        console.warn(`Phase '${phase}' does not exist in assessmentData. Creating default structure.`)
+        return {
+          ...state,
+          assessmentData: {
+            ...state.assessmentData,
+            [phase]: {
+              completed: false,
+              progress: 0,
+              responses: {
+                [section || 'general']: {
+                  [questionId]: answer
+                }
+              }
+            }
+          }
+        }
+      }
+
       return {
         ...state,
         assessmentData: {
@@ -87,24 +140,40 @@ function assessmentReducer(state, action) {
       }
 
     case ACTIONS.UPDATE_PROGRESS:
+      const { phase: progressPhase, progress } = action.payload
+      
+      // Ensure the phase exists
+      if (!state.assessmentData[progressPhase]) {
+        console.warn(`Phase '${progressPhase}' does not exist in assessmentData.`)
+        return state
+      }
+
       return {
         ...state,
         assessmentData: {
           ...state.assessmentData,
-          [action.payload.phase]: {
-            ...state.assessmentData[action.payload.phase],
-            progress: action.payload.progress
+          [progressPhase]: {
+            ...state.assessmentData[progressPhase],
+            progress: progress
           }
         }
       }
 
     case ACTIONS.COMPLETE_PHASE:
+      const phaseToComplete = action.payload
+      
+      // Ensure the phase exists
+      if (!state.assessmentData[phaseToComplete]) {
+        console.warn(`Phase '${phaseToComplete}' does not exist in assessmentData.`)
+        return state
+      }
+
       return {
         ...state,
         assessmentData: {
           ...state.assessmentData,
-          [action.payload]: {
-            ...state.assessmentData[action.payload],
+          [phaseToComplete]: {
+            ...state.assessmentData[phaseToComplete],
             completed: true,
             progress: 100
           }
@@ -146,16 +215,45 @@ function assessmentReducer(state, action) {
       }
 
     case ACTIONS.UPDATE_INSIGHTS:
+      const { phase: insightPhase, insights } = action.payload
+      
+      // Ensure the phase exists
+      if (!state.assessmentData[insightPhase]) {
+        console.warn(`Phase '${insightPhase}' does not exist in assessmentData.`)
+        return state
+      }
+
       return {
         ...state,
         assessmentData: {
           ...state.assessmentData,
-          [action.payload.phase]: {
-            ...state.assessmentData[action.payload.phase],
+          [insightPhase]: {
+            ...state.assessmentData[insightPhase],
             insights: {
-              ...state.assessmentData[action.payload.phase].insights,
-              ...action.payload.insights
+              ...state.assessmentData[insightPhase].insights,
+              ...insights
             }
+          }
+        }
+      }
+
+    case ACTIONS.BULK_UPDATE_PHASE_DATA:
+      const { phase: bulkPhase, data } = action.payload
+      
+      // Ensure the phase exists, create if it doesn't
+      const currentPhaseData = state.assessmentData[bulkPhase] || {
+        completed: false,
+        progress: 0,
+        responses: {}
+      }
+
+      return {
+        ...state,
+        assessmentData: {
+          ...state.assessmentData,
+          [bulkPhase]: {
+            ...currentPhaseData,
+            ...data
           }
         }
       }
@@ -220,6 +318,25 @@ export const ENTREPRENEUR_ARCHETYPES = {
   }
 }
 
+// Phase validation helper
+const validatePhase = (phase) => {
+  const validPhases = [
+    'self-discovery',
+    'idea-discovery', 
+    'market-research',
+    'business-pillars',
+    'product-concept-testing',
+    'business-development',
+    'business-prototype-testing'
+  ]
+  
+  if (!validPhases.includes(phase)) {
+    console.warn(`Invalid phase: ${phase}. Valid phases are: ${validPhases.join(', ')}`)
+    return false
+  }
+  return true
+}
+
 // Context
 const AssessmentContext = createContext()
 
@@ -233,26 +350,36 @@ export function AssessmentProvider({ children }) {
     if (savedState) {
       try {
         const parsedState = JSON.parse(savedState)
-        // Merge with initial state to ensure all properties exist
-        Object.keys(parsedState).forEach(key => {
-          if (key === 'assessmentData') {
-            Object.keys(parsedState.assessmentData).forEach(phase => {
+        
+        // Validate and merge with initial state to ensure all phases exist
+        if (parsedState.assessmentData) {
+          Object.keys(parsedState.assessmentData).forEach(phase => {
+            if (validatePhase(phase)) {
               dispatch({
-                type: ACTIONS.UPDATE_RESPONSE,
+                type: ACTIONS.BULK_UPDATE_PHASE_DATA,
                 payload: {
                   phase,
-                  questionId: 'bulk_update',
-                  answer: parsedState.assessmentData[phase]
+                  data: parsedState.assessmentData[phase]
                 }
               })
-            })
-          } else {
-            dispatch({
-              type: key === 'currentPhase' ? ACTIONS.UPDATE_PHASE : ACTIONS.UPDATE_PROFILE,
-              payload: key === 'currentPhase' ? parsedState[key] : parsedState[key]
-            })
-          }
-        })
+            }
+          })
+        }
+        
+        // Update other state properties
+        if (parsedState.currentPhase && validatePhase(parsedState.currentPhase)) {
+          dispatch({
+            type: ACTIONS.UPDATE_PHASE,
+            payload: parsedState.currentPhase
+          })
+        }
+        
+        if (parsedState.userProfile) {
+          dispatch({
+            type: ACTIONS.UPDATE_PROFILE,
+            payload: parsedState.userProfile
+          })
+        }
       } catch (error) {
         console.error('Error loading saved assessment:', error)
       }
@@ -264,27 +391,35 @@ export function AssessmentProvider({ children }) {
     localStorage.setItem('changepreneurship-assessment', JSON.stringify(state))
   }, [state])
 
-  // Action creators
+  // Action creators with validation
   const updatePhase = (phase) => {
-    dispatch({ type: ACTIONS.UPDATE_PHASE, payload: phase })
+    if (validatePhase(phase)) {
+      dispatch({ type: ACTIONS.UPDATE_PHASE, payload: phase })
+    }
   }
 
   const updateResponse = (phase, questionId, answer, section = 'general') => {
-    dispatch({
-      type: ACTIONS.UPDATE_RESPONSE,
-      payload: { phase, questionId, answer, section }
-    })
+    if (validatePhase(phase)) {
+      dispatch({
+        type: ACTIONS.UPDATE_RESPONSE,
+        payload: { phase, questionId, answer, section }
+      })
+    }
   }
 
   const updateProgress = (phase, progress) => {
-    dispatch({
-      type: ACTIONS.UPDATE_PROGRESS,
-      payload: { phase, progress }
-    })
+    if (validatePhase(phase)) {
+      dispatch({
+        type: ACTIONS.UPDATE_PROGRESS,
+        payload: { phase, progress }
+      })
+    }
   }
 
   const completePhase = (phase) => {
-    dispatch({ type: ACTIONS.COMPLETE_PHASE, payload: phase })
+    if (validatePhase(phase)) {
+      dispatch({ type: ACTIONS.COMPLETE_PHASE, payload: phase })
+    }
   }
 
   const updateProfile = (profileData) => {
@@ -390,15 +525,70 @@ export function AssessmentProvider({ children }) {
   }
 
   const updateInsights = (phase, insights) => {
-    dispatch({
-      type: ACTIONS.UPDATE_INSIGHTS,
-      payload: { phase, insights }
-    })
+    if (validatePhase(phase)) {
+      dispatch({
+        type: ACTIONS.UPDATE_INSIGHTS,
+        payload: { phase, insights }
+      })
+    }
+  }
+
+  const updatePhaseData = (phase, data) => {
+    if (validatePhase(phase)) {
+      dispatch({
+        type: ACTIONS.BULK_UPDATE_PHASE_DATA,
+        payload: { phase, data }
+      })
+    }
   }
 
   const resetAssessment = () => {
     dispatch({ type: ACTIONS.RESET_ASSESSMENT })
     localStorage.removeItem('changepreneurship-assessment')
+  }
+
+  // Helper function to get phase data safely
+  const getPhaseData = (phase) => {
+    if (!validatePhase(phase)) {
+      return null
+    }
+    return state.assessmentData[phase] || null
+  }
+
+  // Helper function to check if all phases are completed
+  const getAllPhasesCompleted = () => {
+    const allPhases = [
+      'self-discovery',
+      'idea-discovery', 
+      'market-research',
+      'business-pillars',
+      'product-concept-testing',
+      'business-development',
+      'business-prototype-testing'
+    ]
+    
+    return allPhases.every(phase => 
+      state.assessmentData[phase]?.completed === true
+    )
+  }
+
+  // Helper function to get overall progress
+  const getOverallProgress = () => {
+    const allPhases = [
+      'self-discovery',
+      'idea-discovery', 
+      'market-research',
+      'business-pillars',
+      'product-concept-testing',
+      'business-development',
+      'business-prototype-testing'
+    ]
+    
+    const totalProgress = allPhases.reduce((sum, phase) => {
+      return sum + (state.assessmentData[phase]?.progress || 0)
+    }, 0)
+    
+    return Math.round(totalProgress / allPhases.length)
   }
 
   const value = {
@@ -411,7 +601,12 @@ export function AssessmentProvider({ children }) {
     calculateArchetype,
     saveOpportunity,
     updateInsights,
-    resetAssessment
+    updatePhaseData,
+    resetAssessment,
+    getPhaseData,
+    getAllPhasesCompleted,
+    getOverallProgress,
+    validatePhase
   }
 
   return (
