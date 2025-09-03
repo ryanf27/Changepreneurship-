@@ -58,7 +58,17 @@ source venv/bin/activate  # Linux/Mac
 # or
 venv\Scripts\activate     # Windows
 pip install -r requirements.txt
+flask --app src.main db upgrade  # Apply database migrations
 python src/main.py
+```
+
+### **Database Migrations:**
+```bash
+# Generate a new migration after model changes
+flask --app src.main db migrate -m "describe changes"
+
+# Apply migrations to the database
+flask --app src.main db upgrade
 ```
 
 ### **Frontend Setup:**
