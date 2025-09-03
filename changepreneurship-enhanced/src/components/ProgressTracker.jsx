@@ -1,101 +1,138 @@
-import React from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
-import { Progress } from '@/components/ui/progress.jsx'
-import { 
-  CheckCircle, 
-  Clock, 
-  Target, 
+import React from "react";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card.jsx";
+import { Badge } from "@/components/ui/badge.jsx";
+import { Progress } from "@/components/ui/progress.jsx";
+import {
+  CheckCircle,
+  Clock,
+  Target,
   TrendingUp,
   Heart,
   Lightbulb,
   Star,
   Compass,
   Brain,
-  Zap
-} from 'lucide-react'
+  Zap,
+} from "lucide-react";
 
-const ProgressTracker = ({ 
-  currentPhase, 
-  phaseProgress = {}, 
-  timeSpent = 0, 
+const ProgressTracker = ({
+  currentPhase,
+  phaseProgress = {},
+  timeSpent = 0,
   estimatedTimeRemaining = 60,
   isOptimized = false,
-  connectedSources = []
+  connectedSources = [],
 }) => {
   const phases = [
     {
-      id: 'self-discovery',
-      title: 'Self Discovery',
-      description: 'Core motivation, values, and vision',
+      id: "self-discovery",
+      title: "Self Discovery",
+      description: "Core motivation, values, and vision",
       icon: Heart,
       estimatedTime: isOptimized ? 10 : 20,
-      sections: ['motivation', 'life-impact', 'values', 'vision', 'confidence', 'results']
+      sections: [
+        "motivation",
+        "life-impact",
+        "values",
+        "vision",
+        "confidence",
+        "results",
+      ],
     },
     {
-      id: 'idea-discovery',
-      title: 'Idea Discovery',
-      description: 'Business ideas and opportunities',
+      id: "idea-discovery",
+      title: "Idea Discovery",
+      description: "Business ideas and opportunities",
       icon: Lightbulb,
       estimatedTime: isOptimized ? 15 : 25,
-      sections: ['core-alignment', 'skills-assessment', 'problem-identification', 'market-promise', 'opportunity-scoring']
+      sections: [
+        "core-alignment",
+        "skills-assessment",
+        "problem-identification",
+        "market-promise",
+        "opportunity-scoring",
+      ],
     },
     {
-      id: 'market-research',
-      title: 'Market Research',
-      description: 'Industry analysis and validation',
+      id: "market-research",
+      title: "Market Research",
+      description: "Industry analysis and validation",
       icon: Target,
       estimatedTime: isOptimized ? 10 : 20,
-      sections: ['market-analysis', 'competitor-research', 'customer-validation']
+      sections: [
+        "market-analysis",
+        "competitor-research",
+        "customer-validation",
+      ],
     },
     {
-      id: 'business-pillars',
-      title: 'Business Pillars',
-      description: 'Foundation and strategy planning',
+      id: "business-pillars",
+      title: "Business Pillars",
+      description: "Foundation and strategy planning",
       icon: Star,
       estimatedTime: isOptimized ? 15 : 25,
-      sections: ['business-model', 'value-proposition', 'revenue-streams', 'key-resources']
+      sections: [
+        "business-model",
+        "value-proposition",
+        "revenue-streams",
+        "key-resources",
+      ],
     },
     {
-      id: 'product-testing',
-      title: 'Product Testing',
-      description: 'Concept validation and feedback',
+      id: "product-testing",
+      title: "Product Testing",
+      description: "Concept validation and feedback",
       icon: Brain,
       estimatedTime: isOptimized ? 10 : 20,
-      sections: ['concept-testing', 'prototype-validation', 'user-feedback']
+      sections: ["concept-testing", "prototype-validation", "user-feedback"],
     },
     {
-      id: 'business-development',
-      title: 'Business Development',
-      description: 'Growth and scaling strategies',
+      id: "business-development",
+      title: "Business Development",
+      description: "Growth and scaling strategies",
       icon: TrendingUp,
       estimatedTime: isOptimized ? 8 : 15,
-      sections: ['growth-strategy', 'scaling-plan', 'decision-making']
-    }
-  ]
+      sections: ["growth-strategy", "scaling-plan", "decision-making"],
+    },
+  ];
 
   const calculateOverallProgress = () => {
-    const totalPhases = phases.length
-    const completedPhases = Object.values(phaseProgress).filter(p => p === 100).length
-    const currentPhaseProgress = phaseProgress[currentPhase] || 0
-    
-    return Math.round(((completedPhases + (currentPhaseProgress / 100)) / totalPhases) * 100)
-  }
+    const totalPhases = phases.length;
+    const completedPhases = Object.values(phaseProgress).filter(
+      (p) => p === 100
+    ).length;
+    const currentPhaseProgress = phaseProgress[currentPhase] || 0;
+
+    return Math.round(
+      ((completedPhases + currentPhaseProgress / 100) / totalPhases) * 100
+    );
+  };
 
   const calculateTimeRemaining = () => {
-    const currentPhaseIndex = phases.findIndex(p => p.id === currentPhase)
-    const remainingPhases = phases.slice(currentPhaseIndex + 1)
-    const currentPhaseTime = phases[currentPhaseIndex]?.estimatedTime || 0
-    const currentPhaseProgress = phaseProgress[currentPhase] || 0
-    
-    const currentPhaseRemaining = currentPhaseTime * (1 - currentPhaseProgress / 100)
-    const remainingPhasesTime = remainingPhases.reduce((total, phase) => total + phase.estimatedTime, 0)
-    
-    return Math.round(currentPhaseRemaining + remainingPhasesTime)
-  }
+    const currentPhaseIndex = phases.findIndex((p) => p.id === currentPhase);
+    const remainingPhases = phases.slice(currentPhaseIndex + 1);
+    const currentPhaseTime = phases[currentPhaseIndex]?.estimatedTime || 0;
+    const currentPhaseProgress = phaseProgress[currentPhase] || 0;
 
-  const overallProgress = calculateOverallProgress()
-  const timeRemaining = calculateTimeRemaining()
+    const currentPhaseRemaining =
+      currentPhaseTime * (1 - currentPhaseProgress / 100);
+    const remainingPhasesTime = remainingPhases.reduce(
+      (total, phase) => total + phase.estimatedTime,
+      0
+    );
+
+    return Math.round(currentPhaseRemaining + remainingPhasesTime);
+  };
+
+  const overallProgress = calculateOverallProgress();
+  const timeRemaining = calculateTimeRemaining();
 
   return (
     <Card className="sticky top-4">
@@ -126,7 +163,9 @@ const ProgressTracker = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center p-3 bg-muted/50 rounded-lg">
             <Clock className="h-5 w-5 mx-auto mb-1 text-primary" />
-            <div className="text-sm font-medium">{Math.round(timeSpent)} min</div>
+            <div className="text-sm font-medium">
+              {Math.round(timeSpent)} min
+            </div>
             <div className="text-xs text-muted-foreground">Time Spent</div>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
@@ -146,7 +185,8 @@ const ProgressTracker = ({
               </span>
             </div>
             <div className="text-xs text-green-600 dark:text-green-400">
-              {connectedSources.length} data source{connectedSources.length !== 1 ? 's' : ''} connected
+              {connectedSources.length} data source
+              {connectedSources.length !== 1 ? "s" : ""} connected
             </div>
           </div>
         )}
@@ -156,49 +196,61 @@ const ProgressTracker = ({
           <h4 className="font-medium">Phase Progress</h4>
           <div className="space-y-3">
             {phases.map((phase, index) => {
-              const IconComponent = phase.icon
-              const progress = phaseProgress[phase.id] || 0
-              const isCompleted = progress === 100
-              const isCurrent = phase.id === currentPhase
-              const isUpcoming = !isCompleted && !isCurrent
+              const IconComponent = phase.icon;
+              const progress = phaseProgress[phase.id] || 0;
+              const isCompleted = progress === 100;
+              const isCurrent = phase.id === currentPhase;
+              const isUpcoming = !isCompleted && !isCurrent;
 
               return (
-                <div 
-                  key={phase.id} 
+                <div
+                  key={phase.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                    isCurrent ? 'border-primary bg-primary/5' : 
-                    isCompleted ? 'border-green-500 bg-green-50 dark:bg-green-950/20' :
-                    'border-muted bg-muted/30'
+                    isCurrent
+                      ? "border-primary bg-primary/5"
+                      : isCompleted
+                      ? "border-green-500 bg-green-50 dark:bg-green-950/20"
+                      : "border-muted bg-muted/30"
                   }`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    isCompleted ? 'bg-green-500' :
-                    isCurrent ? 'bg-primary' :
-                    'bg-muted'
-                  }`}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      isCompleted
+                        ? "bg-green-500"
+                        : isCurrent
+                        ? "bg-primary"
+                        : "bg-muted"
+                    }`}
+                  >
                     {isCompleted ? (
                       <CheckCircle className="h-4 w-4 text-white" />
                     ) : (
-                      <IconComponent className={`h-4 w-4 ${
-                        isCurrent ? 'text-white' : 'text-muted-foreground'
-                      }`} />
+                      <IconComponent
+                        className={`h-4 w-4 ${
+                          isCurrent ? "text-white" : "text-muted-foreground"
+                        }`}
+                      />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className={`font-medium text-sm ${
-                        isCurrent ? 'text-primary' :
-                        isCompleted ? 'text-green-700 dark:text-green-300' :
-                        'text-muted-foreground'
-                      }`}>
+                      <span
+                        className={`font-medium text-sm ${
+                          isCurrent
+                            ? "text-primary"
+                            : isCompleted
+                            ? "text-green-700 dark:text-green-300"
+                            : "text-muted-foreground"
+                        }`}
+                      >
                         {phase.title}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {phase.estimatedTime} min
                       </span>
                     </div>
-                    
+
                     {(isCurrent || isCompleted) && (
                       <div className="space-y-1">
                         <Progress value={progress} className="h-1" />
@@ -207,7 +259,7 @@ const ProgressTracker = ({
                         </div>
                       </div>
                     )}
-                    
+
                     {isUpcoming && (
                       <div className="text-xs text-muted-foreground">
                         {phase.description}
@@ -215,7 +267,7 @@ const ProgressTracker = ({
                     )}
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
@@ -226,16 +278,18 @@ const ProgressTracker = ({
             Estimated Completion
           </div>
           <div className="text-xs text-orange-600 dark:text-orange-400">
-            {new Date(Date.now() + timeRemaining * 60000).toLocaleTimeString([], { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            })}
+            {new Date(Date.now() + timeRemaining * 60000).toLocaleTimeString(
+              [],
+              {
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default ProgressTracker
-
+export default ProgressTracker;

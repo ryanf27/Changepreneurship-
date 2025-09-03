@@ -1,259 +1,313 @@
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
-import { 
-  GripVertical, 
-  ArrowUp, 
-  ArrowDown,
-  CheckCircle
-} from 'lucide-react'
+// drag-drop-ranking.jsx
+// "use client";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card.jsx";
+import { Badge } from "@/components/ui/badge.jsx";
+import { GripVertical, ArrowUp, ArrowDown, CheckCircle } from "lucide-react";
 
-const DragDropRanking = ({ options, value = [], onChange, maxRankings = null }) => {
-  const [rankings, setRankings] = useState([])
-  const [unrankedItems, setUnrankedItems] = useState([])
-  const [draggedItem, setDraggedItem] = useState(null)
-  const [dragOverIndex, setDragOverIndex] = useState(null)
+/**
+ * DragDropRanking
+ * props:
+ *  - options: [{ value: string, label: string }]
+ *  - value:   array of:
+ *      * ["v1","v2"...] atau
+ *      * [{ value, label?, rank? }, ...]
+ *  - onChange: (formattedRankings) => void
+ *      formattedRankings: [{ value, label, rank }, ...]
+ *  - maxRankings?: number | null
+ */
+const DragDropRanking = ({
+  options = [],
+  value = [],
+  onChange,
+  maxRankings = null,
+}) => {
+  // Peta cepat value -> option
+  const optionMap = useMemo(() => {
+    const m = new Map();
+    options.forEach((o) => m.set(o.value, o));
+    return m;
+  }, [options]);
 
-  // Initialize rankings and unranked items
-  useEffect(() => {
-    if (value && value.length > 0) {
-      // Convert from existing format if needed
-      const existingRankings = value.map(item => ({
-        ...item,
-        id: item.value || item.id,
-        label: item.label || options.find(opt => opt.value === item.value)?.label
-      })).sort((a, b) => a.rank - b.rank)
-      
-      setRankings(existingRankings)
-      
-      const rankedIds = existingRankings.map(item => item.id)
-      const unranked = options.filter(option => !rankedIds.includes(option.value))
-      setUnrankedItems(unranked)
-    } else {
-      setRankings([])
-      setUnrankedItems(options)
+  // Normalisasi value dari props jadi array nilai ["v1","v2"...] sesuai urutan
+  const normalizedIncoming = useMemo(() => {
+    if (!Array.isArray(value)) return [];
+    // jika datangnya objek {value, rank}, urutkan dulu
+    if (value.length && typeof value[0] === "object") {
+      const sorted = [...value].sort((a, b) => (a.rank || 0) - (b.rank || 0));
+      return sorted.map((x) => x.value).filter((v) => optionMap.has(v));
     }
-  }, [options, value])
+    // jika sudah array of strings
+    return value.filter((v) => optionMap.has(v));
+  }, [value, optionMap]);
 
-  // Update parent component when rankings change
+  // State lokal
+  const [rankings, setRankings] = useState([]); // array of { value, label }
+  const [unrankedItems, setUnrankedItems] = useState([]); // array of { value, label }
+  const [dragged, setDragged] = useState(null); // { value, source: 'ranked'|'unranked' }
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  // Sinkronisasi awal/ketika props berubah, tapi hanya kalau beda
   useEffect(() => {
-    const formattedRankings = rankings.map((item, index) => ({
-      value: item.id,
+    // urutan saat ini di state
+    const currentValues = rankings.map((r) => r.value);
+    if (!arraysEqual(currentValues, normalizedIncoming)) {
+      const nextRankings = normalizedIncoming.map((v) => ({
+        value: v,
+        label: optionMap.get(v)?.label ?? String(v),
+      }));
+      const rankedSet = new Set(nextRankings.map((x) => x.value));
+      const nextUnranked = options
+        .filter((o) => !rankedSet.has(o.value))
+        .map((o) => ({ value: o.value, label: o.label }));
+      setRankings(nextRankings);
+      setUnrankedItems(nextUnranked);
+    } else {
+      // tetap pastikan unranked terjaga saat options berubah
+      const rankedSet = new Set(currentValues);
+      const nextUnranked = options
+        .filter((o) => !rankedSet.has(o.value))
+        .map((o) => ({ value: o.value, label: o.label }));
+      if (
+        !sameSet(
+          unrankedItems.map((u) => u.value),
+          nextUnranked.map((u) => u.value)
+        )
+      ) {
+        setUnrankedItems(nextUnranked);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedIncoming, options, optionMap]);
+
+  // Util untuk emit ke parent sekali tiap perubahan nyata
+  const emit = (list) => {
+    if (typeof onChange !== "function") return;
+    const formatted = list.map((item, idx) => ({
+      value: item.value,
       label: item.label,
-      rank: index + 1
-    }))
-    onChange(formattedRankings)
-  }, [rankings, onChange])
+      rank: idx + 1,
+    }));
+    onChange(formatted);
+  };
 
-  const handleDragStart = (e, item, source) => {
-    setDraggedItem({ ...item, source })
-    e.dataTransfer.effectAllowed = 'move'
-  }
+  // Drag handlers
+  const onDragStart = (e, item, source) => {
+    setDragged({ value: item.value, label: item.label, source });
+    try {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", item.value);
+    } catch {}
+  };
 
-  const handleDragOver = (e, index) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOverIndex(index)
-  }
+  const lastOverRef = useRef(-1);
+  const onDragOverRankedGap = (e, index) => {
+    e.preventDefault();
+    // hanya update highlight kalau index berubah (hemat render)
+    if (lastOverRef.current !== index) {
+      lastOverRef.current = index;
+      setDragOverIndex(index);
+    }
+  };
 
-  const handleDragLeave = () => {
-    setDragOverIndex(null)
-  }
+  const onDragLeaveRankedGap = () => {
+    setDragOverIndex(null);
+    lastOverRef.current = -1;
+  };
 
-  const handleDrop = (e, targetIndex) => {
-    e.preventDefault()
-    setDragOverIndex(null)
-    
-    if (!draggedItem) return
+  const onDropToRanked = (e, targetIndex) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+    lastOverRef.current = -1;
 
-    if (draggedItem.source === 'unranked') {
-      // Moving from unranked to ranked
-      const newItem = {
-        id: draggedItem.value,
-        label: draggedItem.label,
-        rank: targetIndex + 1
+    if (!dragged) return;
+
+    if (dragged.source === "unranked") {
+      if (maxRankings && rankings.length >= maxRankings) {
+        setDragged(null);
+        return;
       }
-      
-      const newRankings = [...rankings]
-      newRankings.splice(targetIndex, 0, newItem)
-      
-      // Update ranks
-      newRankings.forEach((item, index) => {
-        item.rank = index + 1
-      })
-      
-      setRankings(newRankings)
-      setUnrankedItems(unrankedItems.filter(item => item.value !== draggedItem.value))
+      // Tambah dari unranked ke ranked pada posisi targetIndex
+      const newRankings = [...rankings];
+      newRankings.splice(targetIndex, 0, {
+        value: dragged.value,
+        label: dragged.label,
+      });
+      setRankings(newRankings);
+      setUnrankedItems((prev) => prev.filter((u) => u.value !== dragged.value));
+      emit(newRankings);
     } else {
-      // Reordering within ranked items
-      const newRankings = [...rankings]
-      const draggedIndex = newRankings.findIndex(item => item.id === draggedItem.id)
-      
-      if (draggedIndex !== -1) {
-        const [removed] = newRankings.splice(draggedIndex, 1)
-        newRankings.splice(targetIndex, 0, removed)
-        
-        // Update ranks
-        newRankings.forEach((item, index) => {
-          item.rank = index + 1
-        })
-        
-        setRankings(newRankings)
+      // Reorder sesama ranked
+      const from = rankings.findIndex((r) => r.value === dragged.value);
+      if (from === -1 || from === targetIndex) {
+        setDragged(null);
+        return;
       }
+      const newRankings = [...rankings];
+      const [moved] = newRankings.splice(from, 1);
+      newRankings.splice(targetIndex, 0, moved);
+      setRankings(newRankings);
+      emit(newRankings);
     }
-    
-    setDraggedItem(null)
-  }
 
-  const handleDropToUnranked = (e) => {
-    e.preventDefault()
-    setDragOverIndex(null)
-    
-    if (!draggedItem || draggedItem.source === 'unranked') return
+    setDragged(null);
+  };
 
-    // Moving from ranked back to unranked
-    const itemToRemove = rankings.find(item => item.id === draggedItem.id)
-    if (itemToRemove) {
-      const originalOption = options.find(opt => opt.value === itemToRemove.id)
-      if (originalOption) {
-        setUnrankedItems([...unrankedItems, originalOption])
-        setRankings(rankings.filter(item => item.id !== draggedItem.id).map((item, index) => ({
-          ...item,
-          rank: index + 1
-        })))
-      }
+  const onDropToUnranked = (e) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+    lastOverRef.current = -1;
+    if (!dragged || dragged.source !== "ranked") {
+      setDragged(null);
+      return;
     }
-    
-    setDraggedItem(null)
-  }
+    const idx = rankings.findIndex((r) => r.value === dragged.value);
+    if (idx === -1) {
+      setDragged(null);
+      return;
+    }
+    const removed = rankings[idx];
+    const newRankings = rankings.filter((_, i) => i !== idx);
+    setRankings(newRankings);
+    setUnrankedItems((prev) => {
+      // hindari duplikat
+      if (prev.some((u) => u.value === removed.value)) return prev;
+      // pastikan ada di options
+      const opt = optionMap.get(removed.value);
+      return opt ? [...prev, { value: opt.value, label: opt.label }] : prev;
+    });
+    emit(newRankings);
+    setDragged(null);
+  };
 
-  const moveItem = (fromIndex, direction) => {
-    const newRankings = [...rankings]
-    const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1
-    
-    if (toIndex < 0 || toIndex >= newRankings.length) return
-    
-    const [moved] = newRankings.splice(fromIndex, 1)
-    newRankings.splice(toIndex, 0, moved)
-    
-    // Update ranks
-    newRankings.forEach((item, index) => {
-      item.rank = index + 1
-    })
-    
-    setRankings(newRankings)
-  }
+  // Klik tombol
+  const moveItem = (fromIndex, dir) => {
+    const to = fromIndex + (dir === "up" ? -1 : 1);
+    if (to < 0 || to >= rankings.length) return;
+    const next = [...rankings];
+    const [m] = next.splice(fromIndex, 1);
+    next.splice(to, 0, m);
+    setRankings(next);
+    emit(next);
+  };
 
   const addToRanking = (option) => {
-    if (maxRankings && rankings.length >= maxRankings) return
-    
-    const newItem = {
-      id: option.value,
-      label: option.label,
-      rank: rankings.length + 1
-    }
-    
-    setRankings([...rankings, newItem])
-    setUnrankedItems(unrankedItems.filter(item => item.value !== option.value))
-  }
+    if (maxRankings && rankings.length >= maxRankings) return;
+    if (rankings.some((r) => r.value === option.value)) return;
+    const next = [...rankings, { value: option.value, label: option.label }];
+    setRankings(next);
+    setUnrankedItems((prev) => prev.filter((u) => u.value !== option.value));
+    emit(next);
+  };
 
-  const removeFromRanking = (itemId) => {
-    const itemToRemove = rankings.find(item => item.id === itemId)
-    if (itemToRemove) {
-      const originalOption = options.find(opt => opt.value === itemToRemove.id)
-      if (originalOption) {
-        setUnrankedItems([...unrankedItems, originalOption])
-        setRankings(rankings.filter(item => item.id !== itemId).map((item, index) => ({
-          ...item,
-          rank: index + 1
-        })))
-      }
+  const removeFromRanking = (val) => {
+    const idx = rankings.findIndex((r) => r.value === val);
+    if (idx === -1) return;
+    const next = rankings.filter((r) => r.value !== val);
+    setRankings(next);
+    // kembalikan ke unranked jika memang bagian dari options
+    const opt = optionMap.get(val);
+    if (opt) {
+      setUnrankedItems((prev) =>
+        prev.some((u) => u.value === val)
+          ? prev
+          : [...prev, { value: opt.value, label: opt.label }]
+      );
     }
-  }
+    emit(next);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Instructions */}
+      {/* Petunjuk */}
       <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-        <div className="font-medium mb-1">How to rank:</div>
+        <div className="font-medium mb-1">Cara mengurutkan:</div>
         <ul className="space-y-1">
-          <li>• Drag items from the list below to rank them in order of importance</li>
-          <li>• Use the arrow buttons or drag to reorder ranked items</li>
-          <li>• Drag items back to remove them from your ranking</li>
-          {maxRankings && <li>• You can rank up to {maxRankings} items</li>}
+          <li>• Drag item dari daftar “Available Options” ke “Your Ranking”</li>
+          <li>• Gunakan tombol panah atau drag untuk mengubah urutan</li>
+          <li>• Seret kembali ke bawah untuk menghapus dari ranking</li>
+          {maxRankings && <li>• Maksimal {maxRankings} item</li>}
         </ul>
       </div>
 
-      {/* Ranked Items */}
+      {/* Ranked */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="font-medium">Your Ranking</h4>
           <Badge variant="outline">
-            {rankings.length}{maxRankings ? `/${maxRankings}` : ''} ranked
+            {rankings.length}
+            {maxRankings ? `/${maxRankings}` : ""} ranked
           </Badge>
         </div>
-        
+
         {rankings.length === 0 ? (
-          <div 
+          <div
             className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center text-muted-foreground"
-            onDragOver={(e) => handleDragOver(e, 0)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 0)}
+            onDragOver={(e) => onDragOverRankedGap(e, 0)}
+            onDragLeave={onDragLeaveRankedGap}
+            onDrop={(e) => onDropToRanked(e, 0)}
           >
             Drag items here to start ranking
           </div>
         ) : (
           <div className="space-y-2">
             {rankings.map((item, index) => (
-              <div key={item.id}>
-                {/* Drop zone above each item */}
+              <div key={item.value}>
+                {/* Gap di atas item */}
                 <div
                   className={`h-2 transition-all ${
-                    dragOverIndex === index ? 'bg-primary/20 rounded' : ''
+                    dragOverIndex === index ? "bg-primary/20 rounded" : ""
                   }`}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, index)}
+                  onDragOver={(e) => onDragOverRankedGap(e, index)}
+                  onDragLeave={onDragLeaveRankedGap}
+                  onDrop={(e) => onDropToRanked(e, index)}
                 />
-                
-                <Card 
+
+                <Card
                   className={`cursor-move transition-all ${
-                    draggedItem?.id === item.id ? 'opacity-50 scale-95' : ''
+                    dragged?.value === item.value ? "opacity-50 scale-95" : ""
                   }`}
                   draggable
-                  onDragStart={(e) => handleDragStart(e, item, 'ranked')}
+                  onDragStart={(e) => onDragStart(e, item, "ranked")}
                 >
                   <CardContent className="p-3">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="w-8 h-8 rounded-full flex items-center justify-center p-0">
+                        <Badge
+                          className="w-8 h-8 rounded-full flex items-center justify-center p-0"
+                          variant="secondary"
+                        >
                           {index + 1}
                         </Badge>
                         <GripVertical className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      
-                      <div className="flex-1 font-medium">
-                        {item.label}
-                      </div>
-                      
+
+                      <div className="flex-1 font-medium">{item.label}</div>
+
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => moveItem(index, 'up')}
+                          type="button"
+                          onClick={() => moveItem(index, "up")}
                           disabled={index === 0}
                           className="p-1 hover:bg-muted rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                          aria-label="Move up"
                         >
                           <ArrowUp className="h-3 w-3" />
                         </button>
                         <button
-                          onClick={() => moveItem(index, 'down')}
+                          type="button"
+                          onClick={() => moveItem(index, "down")}
                           disabled={index === rankings.length - 1}
                           className="p-1 hover:bg-muted rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                          aria-label="Move down"
                         >
                           <ArrowDown className="h-3 w-3" />
                         </button>
                         <button
-                          onClick={() => removeFromRanking(item.id)}
+                          type="button"
+                          onClick={() => removeFromRanking(item.value)}
                           className="p-1 hover:bg-destructive/10 hover:text-destructive rounded ml-1"
+                          aria-label="Remove"
                         >
                           ×
                         </button>
@@ -261,16 +315,16 @@ const DragDropRanking = ({ options, value = [], onChange, maxRankings = null }) 
                     </div>
                   </CardContent>
                 </Card>
-                
-                {/* Drop zone after last item */}
+
+                {/* Gap setelah item terakhir */}
                 {index === rankings.length - 1 && (
                   <div
                     className={`h-2 transition-all ${
-                      dragOverIndex === index + 1 ? 'bg-primary/20 rounded' : ''
+                      dragOverIndex === index + 1 ? "bg-primary/20 rounded" : ""
                     }`}
-                    onDragOver={(e) => handleDragOver(e, index + 1)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, index + 1)}
+                    onDragOver={(e) => onDragOverRankedGap(e, index + 1)}
+                    onDragLeave={onDragLeaveRankedGap}
+                    onDrop={(e) => onDropToRanked(e, index + 1)}
                   />
                 )}
               </div>
@@ -279,24 +333,21 @@ const DragDropRanking = ({ options, value = [], onChange, maxRankings = null }) 
         )}
       </div>
 
-      {/* Available Items */}
+      {/* Unranked */}
       {unrankedItems.length > 0 && (
         <div className="space-y-3">
           <h4 className="font-medium">Available Options</h4>
-          <div 
+          <div
             className="grid grid-cols-1 gap-2"
-            onDragOver={(e) => {
-              e.preventDefault()
-              e.dataTransfer.dropEffect = 'move'
-            }}
-            onDrop={handleDropToUnranked}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={onDropToUnranked}
           >
             {unrankedItems.map((option) => (
-              <Card 
+              <Card
                 key={option.value}
                 className="cursor-move hover:bg-muted/50 transition-colors"
                 draggable
-                onDragStart={(e) => handleDragStart(e, option, 'unranked')}
+                onDragStart={(e) => onDragStart(e, option, "unranked")}
               >
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between">
@@ -305,8 +356,9 @@ const DragDropRanking = ({ options, value = [], onChange, maxRankings = null }) 
                       <span className="font-medium">{option.label}</span>
                     </div>
                     <button
+                      type="button"
                       onClick={() => addToRanking(option)}
-                      disabled={maxRankings && rankings.length >= maxRankings}
+                      disabled={!!maxRankings && rankings.length >= maxRankings}
                       className="text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add to ranking
@@ -319,19 +371,35 @@ const DragDropRanking = ({ options, value = [], onChange, maxRankings = null }) 
         </div>
       )}
 
-      {/* Completion Status */}
+      {/* Status */}
       {rankings.length > 0 && (
         <div className="flex items-center gap-2 text-sm text-green-600">
           <CheckCircle className="h-4 w-4" />
           <span>
-            {rankings.length} item{rankings.length !== 1 ? 's' : ''} ranked
-            {maxRankings && rankings.length >= maxRankings && ' (maximum reached)'}
+            {rankings.length} item{rankings.length !== 1 ? "s" : ""} ranked
+            {maxRankings &&
+              rankings.length >= maxRankings &&
+              " (maximum reached)"}
           </span>
         </div>
       )}
     </div>
-  )
+  );
+};
+
+export default DragDropRanking;
+
+/* ===== helpers ===== */
+function arraysEqual(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
 }
 
-export default DragDropRanking
-
+function sameSet(a, b) {
+  if (a.length !== b.length) return false;
+  const sa = new Set(a);
+  for (const x of b) if (!sa.has(x)) return false;
+  return true;
+}

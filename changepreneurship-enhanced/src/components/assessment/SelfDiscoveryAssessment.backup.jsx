@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Progress } from '@/components/ui/progress.jsx'
@@ -24,6 +24,93 @@ import {
 } from 'lucide-react'
 import { useAssessment, ENTREPRENEUR_ARCHETYPES } from '../../contexts/AssessmentContext'
 import DataImportBanner from '../adaptive/DataImportBanner'
+
+// Question definitions
+const motivationQuestions = [
+  {
+    id: 'primary-motivation',
+    question: 'What is the main reason you want to start your own business?',
+    type: 'multiple-choice',
+    required: true,
+    options: [
+      { value: 'transform-world', label: 'Create something that changes the world', description: 'Build transformative solutions for the future' },
+      { value: 'solve-problems', label: 'Solve real problems I see everywhere', description: 'Fix immediate problems with practical solutions' },
+      { value: 'lifestyle-freedom', label: 'Have the lifestyle and freedom I want', description: 'Personal freedom and lifestyle alignment' },
+      { value: 'financial-security', label: 'Build financial security for my family', description: 'Stable income and asset building' },
+      { value: 'social-impact', label: 'Make a positive difference in the world', description: 'Social or environmental impact' },
+      { value: 'seize-opportunities', label: 'Capture market opportunities I see', description: 'Seize opportunities for profit' }
+    ]
+  },
+  {
+    id: 'success-vision',
+    question: 'When you imagine your business being successful, what does that look like?',
+    type: 'textarea',
+    required: true,
+    placeholder: 'Describe your vision of success in detail...',
+    helpText: 'Think about team size, daily life, impact, working hours, and what success means to you personally.'
+  },
+  {
+    id: 'risk-tolerance',
+    question: 'How comfortable are you with taking risks?',
+    type: 'scale',
+    required: true,
+    scaleRange: { min: 1, max: 10 },
+    scaleLabels: { min: 'Very Risk-Averse', max: 'High Risk Tolerance' },
+    helpText: 'Consider both financial and personal risks involved in starting a business.'
+  }
+]
+
+const lifeImpactQuestions = [
+  {
+    id: 'life-satisfaction',
+    question: 'Rate your current satisfaction in different life areas',
+    type: 'multiple-scale',
+    required: true,
+    areas: ['Health', 'Money', 'Family', 'Friends', 'Career', 'Growth', 'Recreation', 'Environment'],
+    scaleRange: { min: 1, max: 10 }
+  }
+]
+
+const valuesQuestions = [
+  {
+    id: 'top-values',
+    question: 'Rank these values in order of importance to you',
+    type: 'ranking',
+    required: true,
+    options: [
+      { value: 'financial-success', label: 'Financial Success' },
+      { value: 'personal-freedom', label: 'Personal Freedom' },
+      { value: 'family-time', label: 'Family Time' },
+      { value: 'making-difference', label: 'Making a Difference' },
+      { value: 'recognition', label: 'Recognition' },
+      { value: 'learning', label: 'Learning' },
+      { value: 'security', label: 'Security' },
+      { value: 'adventure', label: 'Adventure' }
+    ]
+  }
+]
+
+const visionQuestions = [
+  {
+    id: 'ten-year-vision',
+    question: 'Describe your ideal life 10 years from now',
+    type: 'textarea',
+    required: true,
+    placeholder: 'Paint a detailed picture of your future self...',
+    helpText: 'Include your age, how you feel, your identity, contributions, achievements, and relationships.'
+  }
+]
+
+const confidenceQuestions = [
+  {
+    id: 'vision-confidence',
+    question: 'How confident are you that you can achieve your 10-year vision?',
+    type: 'scale',
+    required: true,
+    scaleRange: { min: 1, max: 10 },
+    scaleLabels: { min: 'Not Confident', max: 'Very Confident' }
+  }
+]
 
 const SelfDiscoveryAssessment = () => {
   const { 
@@ -97,10 +184,12 @@ const SelfDiscoveryAssessment = () => {
 
   const currentSectionIndex = sections.findIndex(s => s.id === currentSection)
   const currentSectionData = sections[currentSectionIndex]
+  const CurrentIcon = currentSectionData?.icon
 
-  // Handle response updates
+  // Handle response updates (✅ perbaikan urutan argumen)
   const handleResponse = (questionId, answer) => {
-    updateResponse('self-discovery', currentSection, questionId, answer)
+    // updateResponse(phase, questionId, answer, section)
+    updateResponse('self-discovery', questionId, answer, currentSection)
     
     // Update section progress
     const sectionQuestions = currentSectionData.questions
@@ -112,26 +201,35 @@ const SelfDiscoveryAssessment = () => {
       ...prev,
       [currentSection]: progress
     }))
+
+    // (opsional) Simpan progres ke context agar tracker global akurat
+    const totalSections = sections.filter(s => s.id !== 'results').length
+    const completedSections = Object.values({
+      ...sectionProgress,
+      [currentSection]: progress
+    }).filter(p => p === 100).length
+    const overall = Math.round((completedSections / totalSections) * 100)
+    updateProgress('self-discovery', overall)
   }
 
-  // Handle data import optimization
+  // Handle data import optimization (✅ perbaikan urutan argumen)
   const handleOptimization = (sources) => {
     setConnectedSources(sources)
     setIsOptimized(true)
     setShowDataImport(false)
     
-    // Simulate pre-population based on connected sources
+    // Simulasi pre-populate
     if (sources.includes('linkedin')) {
-      // Pre-populate work-related questions
-      updateResponse('self-discovery', 'motivation', 'primary-motivation', 'solve-problems')
+      // motivation → questionId: 'primary-motivation'
+      updateResponse('self-discovery', 'primary-motivation', 'solve-problems', 'motivation')
     }
     if (sources.includes('financial')) {
-      // Pre-populate financial confidence
-      updateResponse('self-discovery', 'confidence', 'vision-confidence', 7)
+      // confidence → questionId: 'vision-confidence' (angka 7)
+      updateResponse('self-discovery', 'vision-confidence', 7, 'confidence')
     }
   }
 
-  // Navigation functions
+  // Navigation
   const nextSection = () => {
     if (currentSectionIndex < sections.length - 1) {
       setCurrentSection(sections[currentSectionIndex + 1].id)
@@ -144,9 +242,9 @@ const SelfDiscoveryAssessment = () => {
     }
   }
 
-  // Calculate overall progress
+  // Overall progress (hitung dari sectionProgress lokal)
   const calculateOverallProgress = () => {
-    const totalSections = sections.length - 1 // Exclude results section
+    const totalSections = sections.length - 1 // exclude results
     const completedSections = Object.values(sectionProgress).filter(p => p === 100).length
     return Math.round((completedSections / totalSections) * 100)
   }
@@ -231,7 +329,7 @@ const SelfDiscoveryAssessment = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {currentSectionData && <currentSectionData.icon className="h-5 w-5" />}
+            {CurrentIcon && <CurrentIcon className="h-5 w-5" />}
             {currentSectionData?.title}
           </CardTitle>
           <CardDescription>
@@ -332,7 +430,7 @@ const QuestionCard = ({ question, response, onResponse, questionNumber, totalQue
               <span>{question.scaleLabels?.max || 'High'}</span>
             </div>
             <Slider
-              value={[response || question.scaleRange?.min || 1]}
+              value={[response ?? question.scaleRange?.min ?? 1]}
               onValueChange={(value) => onResponse(value[0])}
               min={question.scaleRange?.min || 1}
               max={question.scaleRange?.max || 10}
@@ -340,7 +438,7 @@ const QuestionCard = ({ question, response, onResponse, questionNumber, totalQue
               className="w-full"
             />
             <div className="text-center text-sm font-medium">
-              Current value: {response || question.scaleRange?.min || 1}
+              Current value: {response ?? question.scaleRange?.min ?? 1}
             </div>
           </div>
         )
@@ -395,7 +493,9 @@ const QuestionCard = ({ question, response, onResponse, questionNumber, totalQue
               <CardDescription className="mt-2">{question.description}</CardDescription>
             )}
           </div>
-          {response && <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />}
+          {response !== undefined && response !== '' && (
+            <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -427,11 +527,11 @@ const MultipleScaleInput = ({ areas, scaleRange, value, onChange }) => {
           <div className="flex justify-between items-center">
             <Label className="font-medium">{area}</Label>
             <span className="text-sm text-muted-foreground">
-              {value[area] || scaleRange.min}/{scaleRange.max}
+              {(value[area] ?? scaleRange.min)}/{scaleRange.max}
             </span>
           </div>
           <Slider
-            value={[value[area] || scaleRange.min]}
+            value={[value[area] ?? scaleRange.min]}
             onValueChange={(newValue) => handleScaleChange(area, newValue[0])}
             min={scaleRange.min}
             max={scaleRange.max}
@@ -499,92 +599,4 @@ const ArchetypeResults = ({ archetype, insights }) => {
   )
 }
 
-// Question definitions
-const motivationQuestions = [
-  {
-    id: 'primary-motivation',
-    question: 'What is the main reason you want to start your own business?',
-    type: 'multiple-choice',
-    required: true,
-    options: [
-      { value: 'transform-world', label: 'Create something that changes the world', description: 'Build transformative solutions for the future' },
-      { value: 'solve-problems', label: 'Solve real problems I see everywhere', description: 'Fix immediate problems with practical solutions' },
-      { value: 'lifestyle-freedom', label: 'Have the lifestyle and freedom I want', description: 'Personal freedom and lifestyle alignment' },
-      { value: 'financial-security', label: 'Build financial security for my family', description: 'Stable income and asset building' },
-      { value: 'social-impact', label: 'Make a positive difference in the world', description: 'Social or environmental impact' },
-      { value: 'seize-opportunities', label: 'Capture market opportunities I see', description: 'Seize opportunities for profit' }
-    ]
-  },
-  {
-    id: 'success-vision',
-    question: 'When you imagine your business being successful, what does that look like?',
-    type: 'textarea',
-    required: true,
-    placeholder: 'Describe your vision of success in detail...',
-    helpText: 'Think about team size, daily life, impact, working hours, and what success means to you personally.'
-  },
-  {
-    id: 'risk-tolerance',
-    question: 'How comfortable are you with taking risks?',
-    type: 'scale',
-    required: true,
-    scaleRange: { min: 1, max: 10 },
-    scaleLabels: { min: 'Very Risk-Averse', max: 'High Risk Tolerance' },
-    helpText: 'Consider both financial and personal risks involved in starting a business.'
-  }
-]
-
-const lifeImpactQuestions = [
-  {
-    id: 'life-satisfaction',
-    question: 'Rate your current satisfaction in different life areas',
-    type: 'multiple-scale',
-    required: true,
-    areas: ['Health', 'Money', 'Family', 'Friends', 'Career', 'Growth', 'Recreation', 'Environment'],
-    scaleRange: { min: 1, max: 10 }
-  }
-]
-
-const valuesQuestions = [
-  {
-    id: 'top-values',
-    question: 'Rank these values in order of importance to you',
-    type: 'ranking',
-    required: true,
-    options: [
-      { value: 'financial-success', label: 'Financial Success' },
-      { value: 'personal-freedom', label: 'Personal Freedom' },
-      { value: 'family-time', label: 'Family Time' },
-      { value: 'making-difference', label: 'Making a Difference' },
-      { value: 'recognition', label: 'Recognition' },
-      { value: 'learning', label: 'Learning' },
-      { value: 'security', label: 'Security' },
-      { value: 'adventure', label: 'Adventure' }
-    ]
-  }
-]
-
-const visionQuestions = [
-  {
-    id: 'ten-year-vision',
-    question: 'Describe your ideal life 10 years from now',
-    type: 'textarea',
-    required: true,
-    placeholder: 'Paint a detailed picture of your future self...',
-    helpText: 'Include your age, how you feel, your identity, contributions, achievements, and relationships.'
-  }
-]
-
-const confidenceQuestions = [
-  {
-    id: 'vision-confidence',
-    question: 'How confident are you that you can achieve your 10-year vision?',
-    type: 'scale',
-    required: true,
-    scaleRange: { min: 1, max: 10 },
-    scaleLabels: { min: 'Not Confident', max: 'Very Confident' }
-  }
-]
-
 export default SelfDiscoveryAssessment
-
