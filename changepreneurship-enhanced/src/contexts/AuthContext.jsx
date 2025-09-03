@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import apiService from '../services/api';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import apiService from "../services/api";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -15,11 +15,15 @@ export const useAuth = () => {
 const BYPASS_AUTH = false;
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(BYPASS_AUTH ? { 
-    id: 'demo-user', 
-    username: 'demo', 
-    email: 'demo@changepreneurship.com' 
-  } : null);
+  const [user, setUser] = useState(
+    BYPASS_AUTH
+      ? {
+          id: "demo-user",
+          username: "demo",
+          email: "demo@changepreneurship.com",
+        }
+      : null
+  );
   const [isAuthenticated, setIsAuthenticated] = useState(BYPASS_AUTH);
   const [isLoading, setIsLoading] = useState(!BYPASS_AUTH);
 
@@ -38,7 +42,7 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true);
         }
       } catch (error) {
-        console.warn('Session verification failed:', error.message);
+        console.warn("Session verification failed:", error.message);
         apiService.clearSession();
       } finally {
         setIsLoading(false);
@@ -58,7 +62,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true, data };
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error.message);
       return { success: false, error: error.message };
     }
   };
@@ -74,7 +78,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true, data };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error.message);
       return { success: false, error: error.message };
     }
   };
@@ -87,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await apiService.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error.message);
     } finally {
       setUser(null);
       setIsAuthenticated(false);
@@ -100,7 +104,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     if (!apiService.isAuthenticated()) {
-      return { success: false, error: 'Not authenticated' };
+      return { success: false, error: "Not authenticated" };
     }
 
     try {
@@ -108,7 +112,7 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       return { success: true, data };
     } catch (error) {
-      console.error('Profile fetch error:', error);
+      console.error("Profile fetch error:", error.message);
       return { success: false, error: error.message };
     }
   };
@@ -118,28 +122,31 @@ export const AuthProvider = ({ children }) => {
       // In bypass mode, return mock successful responses
       return new Response(JSON.stringify({ success: true, data: {} }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       });
     }
 
     if (!apiService.isAuthenticated()) {
-      throw new Error('Not authenticated');
+      throw new Error("Not authenticated");
     }
 
     const config = {
       headers: apiService.getHeaders(),
-      ...options
+      ...options,
     };
 
-    const response = await fetch(`${apiService.getApiBaseUrl()}${endpoint}`, config);
-    
+    const response = await fetch(
+      `${apiService.getApiBaseUrl()}${endpoint}`,
+      config
+    );
+
     if (response.status === 401) {
       // Token expired or invalid
       await logout();
-      throw new Error('Session expired');
+      throw new Error("Session expired");
     }
 
-    return response;
+    return apiService.handleResponse(response);
   };
 
   const value = {
@@ -152,13 +159,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     getProfile,
     apiCall,
-    apiService // Expose apiService for direct access
+    apiService, // Expose apiService for direct access
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

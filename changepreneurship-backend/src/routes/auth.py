@@ -115,7 +115,7 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-     """Login user with username or email"""
+    """Login user with username or email"""
     try:
         data = request.get_json()
         

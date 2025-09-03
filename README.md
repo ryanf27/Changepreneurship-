@@ -61,6 +61,8 @@ This package contains the complete, production-ready Changepreneurship platform 
 ```bash
 cd changepreneurship-backend/
 python -m venv venv
+.\.venv\Scripts\Activate.ps1
+
 source venv/bin/activate  # Linux/Mac
 # or
 venv\Scripts\activate     # Windows
@@ -75,8 +77,11 @@ python src/main.py
 # Generate a new migration after model changes
 flask --app src.main db migrate -m "describe changes"
 
+
 # Apply migrations to the database
 flask --app src.main db upgrade
+
+flask db upgrade
 ```
 
 ### **Frontend Setup:**

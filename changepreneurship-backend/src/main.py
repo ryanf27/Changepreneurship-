@@ -7,6 +7,7 @@ from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_migrate import Migrate
 from src.models.assessment import db
+from src.models.assessment import User
 from src.routes.user import user_bp
 from src.routes.auth import auth_bp
 from src.routes.assessment import assessment_bp

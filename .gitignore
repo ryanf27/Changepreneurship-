@@ -1,12 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+instance/
+*.log
+.pytest_cache/
+.cache/
+
+# Flask migrations (opsional, hapus kalau mau di-track)
+migrations/
+
+# Database
 changepreneurship-backend/src/database/*.db
 
-
-changepreneurship-backend/__pycache__/
-changepreneurship-backend/instance/ 
-changepreneurship-backend/src/database
-changepreneurship-backend/.venv/ 
-changepreneurship-backend/venv/
-changepreneurship-backend/migrations/
-changepreneurship-enhanced/node_modules/    
+# Node.js
+changepreneurship-enhanced/node_modules/
 changepreneurship-enhanced/build/
+
+# Environment
+.env
+*.env
+
+# OS / Editor
 .DS_Store
+.vscode/
+.idea/
