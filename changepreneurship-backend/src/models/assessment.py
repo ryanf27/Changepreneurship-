@@ -84,8 +84,10 @@ class AssessmentResponse(db.Model):
     def get_response_value(self):
         if self.response_value:
             try:
+                # Always attempt to parse as JSON for consistency
                 return json.loads(self.response_value)
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, TypeError):
+                # If it fails, return the raw string value
                 return self.response_value
         return None
     
@@ -219,4 +221,3 @@ class UserSession(db.Model):
             'is_active': self.is_active,
             'is_expired': self.is_expired()
         }
-

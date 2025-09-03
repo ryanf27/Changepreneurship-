@@ -1,2 +1,12 @@
 changepreneurship-backend/src/database/*.db
 
+
+changepreneurship-backend/__pycache__/
+changepreneurship-backend/instance/ 
+changepreneurship-backend/src/database
+changepreneurship-backend/.venv/ 
+changepreneurship-backend/venv/
+changepreneurship-backend/migrations/
+changepreneurship-enhanced/node_modules/    
+changepreneurship-enhanced/build/
+.DS_Store
