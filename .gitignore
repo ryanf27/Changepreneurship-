@@ -9,8 +9,6 @@ instance/
 .pytest_cache/
 .cache/
 
-# Flask migrations (opsional, hapus kalau mau di-track)
-migrations/
 
 # Database
 changepreneurship-backend/src/database/*.db
