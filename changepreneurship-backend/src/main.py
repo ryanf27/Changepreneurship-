@@ -10,6 +10,7 @@ from src.routes.user import user_bp
 from src.routes.auth import auth_bp
 from src.routes.assessment import assessment_bp
 from src.routes.analytics import analytics_bp
+from src.routes.principles import principles_bp
 
 app = Flask(
     __name__,
@@ -37,6 +38,7 @@ app.register_blueprint(user_bp, url_prefix="/api")
 app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(assessment_bp, url_prefix="/api/assessment")
 app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
+app.register_blueprint(principles_bp, url_prefix="/api")
 
 db_path = os.path.join(os.path.dirname(__file__), "database", "app.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"

@@ -314,6 +314,27 @@ class ApiService {
   }
 
   /**
+   * Fetch entrepreneurship principles
+   * @param {Object} params - Filter options
+   * @param {string} [params.category] - Principle category
+   * @param {string} [params.stage] - Business stage
+   * @param {number} [params.limit] - Max number of results
+   * @returns {Promise<Array>} List of principles
+   */
+  async getPrinciples(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const url = query
+      ? `${API_BASE_URL}/principles?${query}`
+      : `${API_BASE_URL}/principles`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  /**
    * Get assessment statistics
    * @returns {Promise<Object>} Assessment statistics
    */
