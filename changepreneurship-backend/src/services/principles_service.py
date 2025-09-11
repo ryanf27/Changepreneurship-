@@ -1,39 +1,145 @@
+"""
+Principles Service - Data access layer for entrepreneurship principles
+"""
 import json
 import os
-from functools import lru_cache
-from typing import List, Optional
+from typing import List, Dict, Optional
 
-# Determine path to principles.json relative to this file
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-DATA_FILE = os.path.join(BASE_DIR, "data", "principles.json")
+class PrinciplesService:
+    def __init__(self, principles_file: str | None = None):
+        if principles_file is None:
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            principles_file = os.path.join(base_dir, "data", "principles.json")
+        self.principles_file = principles_file
+        self._principles = None
+        self._load_principles()
 
-@lru_cache(maxsize=1)
-def _load_principles() -> List[dict]:
-    """Load principles from the JSON file once and cache the result."""
-    try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
+    def _load_principles(self):
+        """Load principles from JSON file"""
+        try:
+            if os.path.exists(self.principles_file):
+                with open(self.principles_file, 'r', encoding='utf-8') as f:
+                    self._principles = json.load(f)
+            else:
+                self._principles = []
+        except Exception as e:
+            print(f"Error loading principles: {e}")
+            self._principles = []
 
+    def get_all_principles(self) -> List[Dict]:
+        """Get all principles"""
+        return self._principles or []
 
-def get_principles(
-    category: Optional[str] = None,
-    stage: Optional[str] = None,
-    limit: int = 5,
-) -> List[dict]:
-    """Retrieve principles filtered by category and stage."""
-    principles = _load_principles()
-    if category:
-        principles = [
-            p for p in principles if category in (p.get("categories") or [])
-        ]
-    if stage:
-        principles = [
-            p for p in principles if stage in (p.get("business_stage") or [])
-        ]
-    try:
-        limit = int(limit)
-    except (TypeError, ValueError):
-        limit = 5
-    return principles[:limit]
+    def get_principles_by_category(self, category: str, limit: int = 5) -> List[Dict]:
+        """Get principles filtered by category"""
+        if not self._principles:
+            return []
+
+        filtered: List[Dict] = []
+        for principle in self._principles:
+            categories = principle.get('categories', [])
+            if category.lower() in [cat.lower() for cat in categories]:
+                filtered.append(principle)
+                if len(filtered) >= limit:
+                    break
+
+        return filtered
+
+    def get_principles_by_stage(self, stage: str, limit: int = 5) -> List[Dict]:
+        """Get principles filtered by business stage"""
+        if not self._principles:
+            return []
+
+        filtered: List[Dict] = []
+        for principle in self._principles:
+            stages = principle.get('business_stage', [])
+            if stage.lower() in [s.lower() for s in stages]:
+                filtered.append(principle)
+                if len(filtered) >= limit:
+                    break
+
+        return filtered
+
+    def get_principles_by_category_and_stage(
+        self,
+        category: str | None = None,
+        stage: str | None = None,
+        limit: int = 5,
+    ) -> List[Dict]:
+        """Get principles filtered by both category and stage"""
+        if not self._principles:
+            return []
+
+        filtered: List[Dict] = []
+        for principle in self._principles:
+            category_match = True
+            stage_match = True
+
+            if category:
+                categories = principle.get('categories', [])
+                category_match = category.lower() in [cat.lower() for cat in categories]
+
+            if stage:
+                stages = principle.get('business_stage', [])
+                stage_match = stage.lower() in [s.lower() for s in stages]
+
+            if category_match and stage_match:
+                filtered.append(principle)
+                if len(filtered) >= limit:
+                    break
+
+        return filtered
+
+    def get_principle_by_id(self, principle_id: int) -> Optional[Dict]:
+        """Get a specific principle by ID"""
+        if not self._principles:
+            return None
+
+        for principle in self._principles:
+            if principle.get('id') == principle_id:
+                return principle
+
+        return None
+
+    def search_principles(self, query: str, limit: int = 5) -> List[Dict]:
+        """Search principles by title or summary"""
+        if not self._principles or not query:
+            return []
+
+        query_lower = query.lower()
+        filtered: List[Dict] = []
+
+        for principle in self._principles:
+            title = principle.get('title', '').lower()
+            summary = principle.get('short_summary', '').lower()
+
+            if query_lower in title or query_lower in summary:
+                filtered.append(principle)
+                if len(filtered) >= limit:
+                    break
+
+        return filtered
+
+    def get_categories(self) -> List[str]:
+        """Get all unique categories"""
+        if not self._principles:
+            return []
+
+        categories = set()
+        for principle in self._principles:
+            for category in principle.get('categories', []):
+                categories.add(category)
+
+        return sorted(list(categories))
+
+    def get_stages(self) -> List[str]:
+        """Get all unique business stages"""
+        if not self._principles:
+            return []
+
+        stages = set()
+        for principle in self._principles:
+            for stage in principle.get('business_stage', []):
+                stages.add(stage)
+
+        return sorted(list(stages))

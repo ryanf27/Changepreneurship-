@@ -1,261 +1,211 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button.jsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
-import { Progress } from '@/components/ui/progress.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
-import { 
-  User, 
-  Lightbulb, 
-  Search, 
-  Building, 
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  ArrowRight,
-  BarChart3,
-  Users,
-  FileText
-} from 'lucide-react'
-import { useAssessment, ENTREPRENEUR_ARCHETYPES } from '../contexts/AssessmentContext'
+import React, { useState, useEffect } from 'react';
+import AIRecommendations from './AIRecommendations';
+import PrinciplesSearch from './PrinciplesSearch';
+import './Dashboard.css';
 
-const Dashboard = () => {
-  const { assessmentData, currentPhase } = useAssessment()
+const Dashboard = ({ user = null, assessmentResults = null }) => {
+  const [activeTab, setActiveTab] = useState('recommendations');
+  const [userStage, setUserStage] = useState(null);
+  const [focusAreas, setFocusAreas] = useState([]);
 
-  const phases = [
-    {
-      id: 'self-discovery',
-      title: 'Self Discovery',
-      icon: User,
-      color: 'from-orange-500 to-red-600'
-    },
-    {
-      id: 'idea-discovery',
-      title: 'Idea Discovery',
-      icon: Lightbulb,
-      color: 'from-blue-500 to-purple-600'
-    },
-    {
-      id: 'market-research',
-      title: 'Market Research',
-      icon: Search,
-      color: 'from-green-500 to-teal-600'
-    },
-    {
-      id: 'business-pillars',
-      title: 'Business Pillars',
-      icon: Building,
-      color: 'from-purple-500 to-pink-600'
+  useEffect(() => {
+    if (assessmentResults) {
+      const stage = determineUserStage(assessmentResults);
+      setUserStage(stage);
+
+      const areas = determineFocusAreas(assessmentResults);
+      setFocusAreas(areas);
     }
-  ]
+  }, [assessmentResults]);
 
-  const overallProgress = Math.round(
-    (Object.values(assessmentData).filter(data => data?.completed).length / phases.length) * 100
-  )
+  const determineUserStage = (results) => {
+    if (!results || !results.scores) return 'ideation';
 
-  const selfDiscoveryData = assessmentData['self-discovery'] || {}
-  const archetype = selfDiscoveryData.archetype
-  const archetypeData = archetype ? ENTREPRENEUR_ARCHETYPES[archetype] : null
+    const scores = results.scores;
+    const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
+    const averageScore = totalScore / Object.keys(scores).length;
+
+    if (averageScore < 30) return 'ideation';
+    if (averageScore < 50) return 'validation';
+    if (averageScore < 70) return 'early_stage';
+    if (averageScore < 85) return 'growth';
+    return 'scaling';
+  };
+
+  const determineFocusAreas = (results) => {
+    if (!results || !results.scores) return [];
+
+    const scores = results.scores;
+    const sortedAreas = Object.entries(scores)
+      .sort(([,a], [,b]) => a - b)
+      .slice(0, 3)
+      .map(([area]) => area);
+
+    const areaMapping = {
+      'idea_validation': 'customer_validation',
+      'market_research': 'market_analysis',
+      'business_model': 'business_model',
+      'team_building': 'team_building',
+      'funding': 'fundraising',
+      'product_development': 'product_development',
+      'marketing': 'marketing',
+      'sales': 'sales',
+      'operations': 'operations',
+      'leadership': 'leadership'
+    };
+
+    return sortedAreas.map(area => areaMapping[area] || area).filter(Boolean);
+  };
+
+  const formatStage = (stage) => {
+    if (!stage) return 'Getting Started';
+    return stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const getStageDescription = (stage) => {
+    const descriptions = {
+      'ideation': "You're in the idea generation and opportunity recognition phase.",
+      'validation': "You're validating your business concept and testing assumptions.",
+      'early_stage': "You're building your MVP and finding product-market fit.",
+      'growth': "You're scaling your business and optimizing operations.",
+      'scaling': "You're expanding rapidly and building sustainable systems."
+    };
+    return descriptions[stage] || 'Welcome to your entrepreneurship journey!';
+  };
+
+  const tabs = [
+    { id: 'recommendations', label: '🎯 Personalized Recommendations', icon: '🎯' },
+    { id: 'explore', label: '🔍 Explore All Principles', icon: '🔍' },
+    { id: 'progress', label: '📊 Your Progress', icon: '📊' }
+  ];
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="container mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Your Dashboard</h1>
-            <p className="text-muted-foreground">
-              Track your entrepreneurial journey and access your personalized insights
-            </p>
+    <div className="dashboard">
+      <div className="dashboard-header">
+      <div className="welcome-section">
+        <h1>Welcome back{user?.name ? `, ${user.name}` : ''}! 👋</h1>
+        <div className="user-status">
+          <div className="current-stage">
+            <span className="stage-label">Current Stage:</span>
+            <span className="stage-value">{formatStage(userStage)}</span>
           </div>
-          <Link to="/assessment">
-            <Button>
-              Continue Assessment
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-
-        {/* Progress Overview */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Overall Progress</p>
-                  <p className="text-3xl font-bold">{overallProgress}%</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-primary" />
-              </div>
-              <Progress value={overallProgress} className="mt-4" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completed Phases</p>
-                  <p className="text-3xl font-bold">
-                    {Object.values(assessmentData).filter(data => data?.completed).length}
-                  </p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Current Phase</p>
-                  <p className="text-lg font-semibold">
-                    {phases.find(p => p.id === currentPhase)?.title || 'Not Started'}
-                  </p>
-                </div>
-                <Clock className="h-8 w-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Archetype</p>
-                  <p className="text-lg font-semibold">
-                    {archetypeData ? archetypeData.name : 'Not Determined'}
-                  </p>
-                </div>
-                <User className="h-8 w-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Phase Progress */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Assessment Progress</CardTitle>
-            <CardDescription>
-              Complete all phases to unlock your full entrepreneurial profile
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              {phases.map((phase) => {
-                const Icon = phase.icon
-                const phaseData = assessmentData[phase.id] || {}
-                const isCompleted = phaseData.completed || false
-                const progress = phaseData.progress || 0
-
-                return (
-                  <div key={phase.id} className="flex items-center gap-4 p-4 rounded-lg border">
-                    <div className={`p-3 rounded-lg bg-gradient-to-br ${phase.color}`}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold">{phase.title}</h3>
-                        {isCompleted && <CheckCircle className="h-5 w-5 text-green-500" />}
-                      </div>
-                      <Progress value={progress} className="mb-2" />
-                      <p className="text-sm text-muted-foreground">{progress}% complete</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Archetype Results */}
-        {archetypeData && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                Your Entrepreneur Archetype
-              </CardTitle>
-              <CardDescription>
-                Based on your self-discovery assessment
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-2xl font-bold mb-2">{archetypeData.name}</h3>
-                  <p className="text-muted-foreground italic mb-4">"{archetypeData.description}"</p>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold">Key Traits:</h4>
-                    <ul className="space-y-1">
-                      {archetypeData.traits.map((trait, index) => (
-                        <li key={index} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          {trait}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Business Focus</h4>
-                  <p className="text-sm text-muted-foreground mb-4">{archetypeData.businessFocus}</p>
-                  <h4 className="font-semibold mb-2">Recommended Business Types</h4>
-                  <ul className="space-y-1">
-                    {archetypeData.examples.map((example, index) => (
-                      <li key={index} className="flex items-center gap-2 text-sm">
-                        <Lightbulb className="h-4 w-4 text-primary" />
-                        {example}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <BarChart3 className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">View Analytics</h3>
-              <p className="text-sm text-muted-foreground">
-                Detailed insights and progress analytics
-              </p>
-              <Badge variant="secondary" className="mt-2">Coming Soon</Badge>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <Users className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Investor Matches</h3>
-              <p className="text-sm text-muted-foreground">
-                Connect with relevant investors
-              </p>
-              <Badge variant="secondary" className="mt-2">Coming Soon</Badge>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Business Assets</h3>
-              <p className="text-sm text-muted-foreground">
-                Generate business documents and plans
-              </p>
-              <Badge variant="secondary" className="mt-2">Coming Soon</Badge>
-            </CardContent>
-          </Card>
+          <p className="stage-description">{getStageDescription(userStage)}</p>
         </div>
       </div>
+
+      {focusAreas.length > 0 && (
+        <div className="focus-areas">
+          <h3>🎯 Your Focus Areas:</h3>
+          <div className="focus-tags">
+            {focusAreas.map((area, index) => (
+              <span key={index} className="focus-tag">
+                {area.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      </div>
+
+      <div className="dashboard-navigation">
+        <div className="tab-buttons">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="tab-icon">{tab.icon}</span>
+              <span className="tab-label">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="dashboard-content">
+        {activeTab === 'recommendations' && (
+          <div className="recommendations-tab">
+            <AIRecommendations
+              userStage={userStage}
+              focusAreas={focusAreas}
+              limit={8}
+              title="🤖 Personalized Recommendations for You"
+            />
+            {userStage && (
+              <AIRecommendations
+                stage={userStage}
+                limit={5}
+                title={`📈 Essential Principles for ${formatStage(userStage)} Stage`}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === 'explore' && (
+          <div className="explore-tab">
+            <PrinciplesSearch />
+          </div>
+        )}
+
+        {activeTab === 'progress' && (
+          <div className="progress-tab">
+            <div className="progress-content">
+              <h3>📊 Your Entrepreneurship Journey</h3>
+
+              {assessmentResults ? (
+                <div className="assessment-summary">
+                  <div className="overall-score">
+                    <h4>Overall Readiness Score</h4>
+                    <div className="score-circle">
+                      <span className="score-value">
+                        {Math.round(Object.values(assessmentResults.scores || {}).reduce((sum, score) => sum + score, 0) / Object.keys(assessmentResults.scores || {}).length)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="area-scores">
+                    <h4>Area Breakdown</h4>
+                    <div className="scores-grid">
+                      {Object.entries(assessmentResults.scores || {}).map(([area, score]) => (
+                        <div key={area} className="score-item">
+                          <span className="area-name">
+                            {area.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                          <div className="score-bar">
+                            <div 
+                              className="score-fill" 
+                              style={{ width: `${score}%` }}
+                            ></div>
+                          </div>
+                          <span className="score-number">{score}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="next-steps">
+                    <h4>🎯 Recommended Next Steps</h4>
+                    <AIRecommendations
+                      focusAreas={focusAreas.slice(0, 2)}
+                      limit={3}
+                      title="Priority Actions Based on Your Assessment"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="no-assessment">
+                  <p>Take an assessment to see your progress and get personalized recommendations!</p>
+                  <button className="cta-button">
+                    📝 Take Assessment
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
-
+export default Dashboard;
