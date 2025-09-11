@@ -4,47 +4,21 @@ Uses token-based authentication and aligns with current model fields
 """
 
 from flask import Blueprint, request, jsonify, current_app
-from src.models.assessment import db, User, Assessment, AssessmentResponse, EntrepreneurProfile, UserSession
+from src.models.assessment import db, Assessment, AssessmentResponse, EntrepreneurProfile
+from src.utils.auth import verify_session_token
 from sqlalchemy import func, desc
 from datetime import datetime, timedelta
 import json
 
 analytics_bp = Blueprint('analytics', __name__)
 
-def verify_session_token():
-    """Verify user session token and return user_id if valid"""
-    try:
-        session_token = request.headers.get('Authorization')
-        if session_token and session_token.startswith('Bearer '):
-            session_token = session_token[7:]
-        
-        if not session_token:
-            return None, {'error': 'No session token provided'}, 401
-        
-        session = UserSession.query.filter_by(
-            session_token=session_token,
-            is_active=True
-        ).first()
-        
-        if not session or session.is_expired():
-            return None, {'error': 'Invalid or expired session'}, 401
-        
-        user = User.query.get(session.user_id)
-        if not user:
-            return None, {'error': 'User not found'}, 404
-        
-        return user.id, None, None
-        
-    except Exception as e:
-        current_app.logger.error(f"Session verification error: {str(e)}")
-        return None, {'error': 'Internal server error'}, 500
-
 @analytics_bp.route('/dashboard/overview', methods=['GET'])
 def get_dashboard_overview():
     """Get comprehensive dashboard overview for authenticated user"""
-    user_id, error, status_code = verify_session_token()
+    user, session, error, status_code = verify_session_token()
     if error:
         return jsonify(error), status_code
+    user_id = user.id
     
     try:
         # Get user's assessments
@@ -134,9 +108,10 @@ def get_dashboard_overview():
 @analytics_bp.route('/dashboard/progress-history', methods=['GET'])
 def get_progress_history():
     """Get historical progress data for charts"""
-    user_id, error, status_code = verify_session_token()
+    user, session, error, status_code = verify_session_token()
     if error:
         return jsonify(error), status_code
+    user_id = user.id
     
     days = request.args.get('days', 30, type=int)
     
@@ -193,9 +168,10 @@ def get_progress_history():
 @analytics_bp.route('/dashboard/entrepreneur-profile', methods=['GET'])
 def get_entrepreneur_profile():
     """Get detailed entrepreneur profile and archetype analysis"""
-    user_id, error, status_code = verify_session_token()
+    user, session, error, status_code = verify_session_token()
     if error:
         return jsonify(error), status_code
+    user_id = user.id
     
     try:
         # Get entrepreneur profile
@@ -238,9 +214,10 @@ def get_entrepreneur_profile():
 @analytics_bp.route('/dashboard/recommendations', methods=['GET'])
 def get_personalized_recommendations():
     """Get AI-powered personalized recommendations"""
-    user_id, error, status_code = verify_session_token()
+    user, session, error, status_code = verify_session_token()
     if error:
         return jsonify(error), status_code
+    user_id = user.id
     
     try:
         # Get user's assessment data
@@ -262,9 +239,10 @@ def get_personalized_recommendations():
 @analytics_bp.route('/dashboard/assessment-stats', methods=['GET'])
 def get_assessment_statistics():
     """Get detailed assessment statistics"""
-    user_id, error, status_code = verify_session_token()
+    user, session, error, status_code = verify_session_token()
     if error:
         return jsonify(error), status_code
+    user_id = user.id
     
     try:
         # Get all user assessments and responses

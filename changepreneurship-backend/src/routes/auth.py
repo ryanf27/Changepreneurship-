@@ -5,6 +5,7 @@ import secrets
 import re
 
 from src.models.assessment import db, User, UserSession, EntrepreneurProfile
+from src.utils.auth import verify_session_token
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -137,14 +138,10 @@ def login():
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     try:
-        session_token = request.headers.get('Authorization')
-        if session_token and session_token.startswith('Bearer '):
-            session_token = session_token[7:]
+        user, session, error, status_code = verify_session_token()
+        if error:
+            return jsonify(error), status_code
 
-        if not session_token:
-            return jsonify({'error': 'No session token provided'}), 400
-
-        session = UserSession.query.filter_by(session_token=session_token).first()
         if session:
             session.is_active = False
             db.session.commit()
@@ -158,20 +155,9 @@ def logout():
 @auth_bp.route('/verify', methods=['GET'])
 def verify_session():
     try:
-        session_token = request.headers.get('Authorization')
-        if session_token and session_token.startswith('Bearer '):
-            session_token = session_token[7:]
-
-        if not session_token:
-            return jsonify({'error': 'No session token provided'}), 401
-
-        session = UserSession.query.filter_by(session_token=session_token, is_active=True).first()
-        if not session or session.is_expired():
-            return jsonify({'error': 'Invalid or expired session'}), 401
-
-        user = User.query.get(session.user_id)
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
+        user, session, error, status_code = verify_session_token()
+        if error:
+            return jsonify(error), status_code
 
         return jsonify({
             'valid': True,
@@ -186,20 +172,9 @@ def verify_session():
 @auth_bp.route('/profile', methods=['GET'])
 def get_profile():
     try:
-        session_token = request.headers.get('Authorization')
-        if session_token and session_token.startswith('Bearer '):
-            session_token = session_token[7:]
-
-        if not session_token:
-            return jsonify({'error': 'No session token provided'}), 401
-
-        session = UserSession.query.filter_by(session_token=session_token, is_active=True).first()
-        if not session or session.is_expired():
-            return jsonify({'error': 'Invalid or expired session'}), 401
-
-        user = User.query.get(session.user_id)
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
+        user, session, error, status_code = verify_session_token()
+        if error:
+            return jsonify(error), status_code
 
         profile = EntrepreneurProfile.query.filter_by(user_id=user.id).first()
         if not profile:

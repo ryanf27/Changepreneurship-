@@ -2,41 +2,18 @@ from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
 import json
 
-from src.models.assessment import db, User, UserSession, Assessment, AssessmentResponse, EntrepreneurProfile
+from src.models.assessment import db, Assessment, AssessmentResponse, EntrepreneurProfile
+from src.utils.auth import verify_session_token
 
 assessment_bp = Blueprint('assessment', __name__)
-
-def verify_session_token(session_token):
-    """Verify session token and return user"""
-    if not session_token:
-        return None, 'No session token provided'
-    
-    if session_token.startswith('Bearer '):
-        session_token = session_token[7:]
-    
-    session = UserSession.query.filter_by(
-        session_token=session_token,
-        is_active=True
-    ).first()
-    
-    if not session or session.is_expired():
-        return None, 'Invalid or expired session'
-    
-    user = User.query.get(session.user_id)
-    if not user:
-        return None, 'User not found'
-    
-    return user, None
 
 @assessment_bp.route('/phases', methods=['GET'])
 def get_assessment_phases():
     """Get all assessment phases with user progress"""
     try:
-        session_token = request.headers.get('Authorization')
-        user, error = verify_session_token(session_token)
-        
+        user, session, error, status_code = verify_session_token()
         if error:
-            return jsonify({'error': error}), 401
+            return jsonify(error), status_code
         
         # Define all phases
         phases = [
@@ -128,11 +105,9 @@ def get_assessment_phases():
 def start_assessment(phase_id):
     """Start or resume an assessment phase"""
     try:
-        session_token = request.headers.get('Authorization')
-        user, error = verify_session_token(session_token)
-        
+        user, session, error, status_code = verify_session_token()
         if error:
-            return jsonify({'error': error}), 401
+            return jsonify(error), status_code
         
         # Phase names mapping
         phase_names = {
@@ -178,11 +153,9 @@ def start_assessment(phase_id):
 def save_response(assessment_id):
     """Save assessment response"""
     try:
-        session_token = request.headers.get('Authorization')
-        user, error = verify_session_token(session_token)
-        
+        user, session, error, status_code = verify_session_token()
         if error:
-            return jsonify({'error': error}), 401
+            return jsonify(error), status_code
         
         data = request.get_json()
         if not data:
@@ -240,11 +213,9 @@ def save_response(assessment_id):
 def update_progress(assessment_id):
     """Update assessment progress"""
     try:
-        session_token = request.headers.get('Authorization')
-        user, error = verify_session_token(session_token)
-        
+        user, session, error, status_code = verify_session_token()
         if error:
-            return jsonify({'error': error}), 401
+            return jsonify(error), status_code
         
         data = request.get_json()
         if not data:
@@ -289,11 +260,9 @@ def update_progress(assessment_id):
 def get_responses(assessment_id):
     """Get all responses for an assessment"""
     try:
-        session_token = request.headers.get('Authorization')
-        user, error = verify_session_token(session_token)
-        
+        user, session, error, status_code = verify_session_token()
         if error:
-            return jsonify({'error': error}), 401
+            return jsonify(error), status_code
         
         # Verify assessment belongs to user
         assessment = Assessment.query.filter_by(
@@ -319,11 +288,9 @@ def get_responses(assessment_id):
 def update_profile():
     """Update entrepreneur profile with assessment results"""
     try:
-        session_token = request.headers.get('Authorization')
-        user, error = verify_session_token(session_token)
-        
+        user, session, error, status_code = verify_session_token()
         if error:
-            return jsonify({'error': error}), 401
+            return jsonify(error), status_code
         
         data = request.get_json()
         if not data:
