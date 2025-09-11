@@ -37,9 +37,13 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       try {
         if (apiService.isAuthenticated()) {
-          const data = await apiService.verifySession();
-          setUser(data.user);
-          setIsAuthenticated(true);
+          const result = await apiService.verifySession();
+          if (result.success && result.data?.user) {
+            setUser(result.data.user);
+            setIsAuthenticated(true);
+          } else {
+            apiService.clearSession();
+          }
         }
       } catch (error) {
         console.warn("Session verification failed:", error.message);
@@ -53,14 +57,16 @@ export const AuthProvider = ({ children }) => {
   }, []);
   const register = async (userData) => {
     if (BYPASS_AUTH) {
-      return { success: true, data: { user: user } };
+      return { success: true, data: { user } };
     }
 
     try {
-      const data = await apiService.register(userData);
-      setUser(data.user);
-      setIsAuthenticated(true);
-      return { success: true, data };
+      const result = await apiService.register(userData);
+      if (result.success && result.data?.user) {
+        setUser(result.data.user);
+        setIsAuthenticated(true);
+      }
+      return result;
     } catch (error) {
       console.error("Registration error:", error.message);
       return { success: false, error: error.message };
@@ -69,14 +75,16 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     if (BYPASS_AUTH) {
-      return { success: true, data: { user: user } };
+      return { success: true, data: { user } };
     }
 
     try {
-      const data = await apiService.login(credentials);
-      setUser(data.user);
-      setIsAuthenticated(true);
-      return { success: true, data };
+      const result = await apiService.login(credentials);
+      if (result.success && result.data?.user) {
+        setUser(result.data.user);
+        setIsAuthenticated(true);
+      }
+      return result;
     } catch (error) {
       console.error("Login error:", error.message);
       return { success: false, error: error.message };
@@ -100,7 +108,7 @@ export const AuthProvider = ({ children }) => {
 
   const getProfile = async () => {
     if (BYPASS_AUTH) {
-      return { success: true, data: { user: user } };
+      return { success: true, data: { user } };
     }
 
     if (!apiService.isAuthenticated()) {
@@ -108,9 +116,11 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const data = await apiService.getProfile();
-      setUser(data.user);
-      return { success: true, data };
+      const result = await apiService.getProfile();
+      if (result.success && result.data?.user) {
+        setUser(result.data.user);
+      }
+      return result;
     } catch (error) {
       console.error("Profile fetch error:", error.message);
       return { success: false, error: error.message };
