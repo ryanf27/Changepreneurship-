@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const UserProfile = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -59,7 +61,7 @@ const UserProfile = () => {
             <button
               onClick={() => {
                 setIsDropdownOpen(false);
-                // Navigate to profile page when implemented
+                navigate('/profile');
               }}
               className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200"
             >
@@ -74,7 +76,7 @@ const UserProfile = () => {
             <button
               onClick={() => {
                 setIsDropdownOpen(false);
-                // Navigate to assessment history when implemented
+                navigate('/assessment-history');
               }}
               className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200"
             >

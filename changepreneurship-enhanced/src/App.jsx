@@ -60,6 +60,8 @@ import LandingPage from "./components/LandingPage";
 import UserDashboard from "./components/dashboard/UserDashboard";
 import AdaptiveDemo from "./components/AdaptiveDemo";
 import SimpleAdaptiveDemo from "./components/SimpleAdaptiveDemo";
+import ProfileSettings from "./components/ProfileSettings";
+import AssessmentHistory from "./components/AssessmentHistory";
 
 const AssessmentPage = () => {
   const { assessmentData, currentPhase, updatePhase } = useAssessment();
@@ -298,6 +300,8 @@ function App() {
               <Route path="/user-dashboard" element={<UserDashboard />} />
               <Route path="/adaptive-demo" element={<AdaptiveDemo />} />
               <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
+              <Route path="/profile" element={<ProfileSettings />} />
+              <Route path="/assessment-history" element={<AssessmentHistory />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
