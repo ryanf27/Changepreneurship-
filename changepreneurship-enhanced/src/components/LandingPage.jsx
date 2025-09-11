@@ -190,7 +190,7 @@ const LandingPage = () => {
                     AI Insights
                   </Button>
                 </Link>
-                <Link to="/dashboard">
+                <Link to="/user-dashboard">
                   <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                     View Dashboard
                   </Button>

@@ -12,7 +12,13 @@ const AIRecommendationsSimple = () => {
   useEffect(() => {
     apiService
       .getPrinciples()
-      .then(setPrinciples)
+      .then((res) => {
+        if (res.success) {
+          setPrinciples(res.data)
+        } else {
+          setError(res.error || 'Failed to load principles')
+        }
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])

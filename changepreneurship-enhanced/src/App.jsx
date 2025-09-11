@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -62,8 +62,7 @@ import AdaptiveDemo from "./components/AdaptiveDemo";
 import SimpleAdaptiveDemo from "./components/SimpleAdaptiveDemo";
 
 const AssessmentPage = () => {
-  const { assessmentData, updateAssessmentData, currentPhase, updatePhase } =
-    useAssessment();
+  const { assessmentData, currentPhase, updatePhase } = useAssessment();
 
   // Check for URL parameters to set initial phase
   useEffect(() => {
@@ -200,7 +199,7 @@ const AssessmentPage = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
-              {phases.map((phase, index) => {
+                {phases.map((phase) => {
                 const Icon = phase.icon;
                 const isCompleted =
                   assessmentData[phase.id]?.completed || false;
