@@ -133,33 +133,24 @@ def get_recommendations():
         focus_areas = data.get('focus_areas', [])
         limit = data.get('limit', 5)
 
-        recommendations = []
+        # Validate limit
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            limit = 5
+        if limit < 1 or limit > 50:
+            limit = 5
 
-        # Get principles for user's current stage
-        if user_stage:
-            stage_principles = principles_service.get_principles_by_stage(user_stage, limit)
-            recommendations.extend(stage_principles)
-
-        # Get principles for focus areas
-        for area in focus_areas:
-            area_principles = principles_service.get_principles_by_category(area, 2)
-            recommendations.extend(area_principles)
-
-        # Remove duplicates while preserving order
-        seen_ids = set()
-        unique_recommendations = []
-        for principle in recommendations:
-            if principle['id'] not in seen_ids:
-                unique_recommendations.append(principle)
-                seen_ids.add(principle['id'])
-
-        # Limit results
-        final_recommendations = unique_recommendations[:limit]
+        recommendations = principles_service.get_recommendations(
+            user_stage=user_stage,
+            focus_areas=focus_areas,
+            limit=limit,
+        )
 
         return jsonify({
             'success': True,
-            'data': final_recommendations,
-            'count': len(final_recommendations)
+            'data': recommendations,
+            'count': len(recommendations)
         })
 
     except Exception as e:

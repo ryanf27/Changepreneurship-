@@ -143,3 +143,37 @@ class PrinciplesService:
                 stages.add(stage)
 
         return sorted(list(stages))
+
+    def get_recommendations(
+        self,
+        user_stage: str | None,
+        focus_areas: List[str] | None = None,
+        limit: int = 5,
+    ) -> List[Dict]:
+        """Generate personalized principle recommendations."""
+        if not self._principles:
+            return []
+
+        recommendations: List[Dict] = []
+
+        # Recommendations based on user's business stage
+        if user_stage:
+            stage_principles = self.get_principles_by_stage(user_stage, limit)
+            recommendations.extend(stage_principles)
+
+        # Recommendations based on focus areas/categories
+        if focus_areas:
+            for area in focus_areas:
+                area_principles = self.get_principles_by_category(area, 2)
+                recommendations.extend(area_principles)
+
+        # Remove duplicates while preserving order
+        seen_ids = set()
+        unique_recommendations: List[Dict] = []
+        for principle in recommendations:
+            pid = principle.get('id')
+            if pid not in seen_ids:
+                unique_recommendations.append(principle)
+                seen_ids.add(pid)
+
+        return unique_recommendations[:limit]
