@@ -11,6 +11,11 @@ from src.routes.auth import auth_bp
 from src.routes.assessment import assessment_bp
 from src.routes.analytics import analytics_bp
 from src.routes.principles import principles_bp
+from src.routes.purpose_discovery import purpose_discovery_bp
+from src.routes.mind_mapping import mind_mapping_bp
+from src.routes.value_zone_validator import value_zone_bp
+from src.routes.ai_adoption_roadmap import ai_adoption_bp
+from src.routes.enhanced_assessment import enhanced_assessment_bp
 
 app = Flask(
     __name__,
@@ -39,6 +44,11 @@ app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(assessment_bp, url_prefix="/api/assessment")
 app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
 app.register_blueprint(principles_bp, url_prefix="/api")
+app.register_blueprint(purpose_discovery_bp, url_prefix="/api/purpose-discovery")
+app.register_blueprint(mind_mapping_bp, url_prefix="/api/mind-mapping")
+app.register_blueprint(value_zone_bp, url_prefix="/api/value-zone")
+app.register_blueprint(ai_adoption_bp, url_prefix="/api/ai-adoption")
+app.register_blueprint(enhanced_assessment_bp, url_prefix="/api/enhanced-assessment")
 
 db_path = os.path.join(os.path.dirname(__file__), "database", "app.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
