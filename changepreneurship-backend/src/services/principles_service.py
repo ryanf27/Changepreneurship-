@@ -3,7 +3,10 @@ Principles Service - Data access layer for entrepreneurship principles
 """
 import json
 import os
+import logging
 from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 class PrinciplesService:
     def __init__(self, principles_file: str | None = None):
@@ -23,7 +26,7 @@ class PrinciplesService:
             else:
                 self._principles = []
         except Exception as e:
-            print(f"Error loading principles: {e}")
+            logger.error(f"Error loading principles: {e}")
             self._principles = []
 
     def get_all_principles(self) -> List[Dict]:
