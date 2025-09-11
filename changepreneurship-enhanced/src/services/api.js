@@ -43,13 +43,20 @@ class ApiService {
     } catch {
       // ignore parse errors
     }
+
+    // Flatten standard API responses that wrap payloads in a `data` property
+    const resultData =
+      data && typeof data === "object" && data !== null && "data" in data
+        ? data.data
+        : data;
+
     if (!response.ok) {
       const error =
         (data && (data.error || data.message)) ||
         `HTTP ${response.status}: ${response.statusText}`;
       return { success: false, error };
     }
-    return { success: true, data };
+    return { success: true, data: resultData };
   }
 
   async request(endpoint, options = {}) {
@@ -147,7 +154,7 @@ class ApiService {
         headers: this.getHeaders(),
       });
       await this.handleResponse(res);
-    } catch (err) {
+    } catch {
       // ignore network errors during logout
     } finally {
       this.clearSession();
