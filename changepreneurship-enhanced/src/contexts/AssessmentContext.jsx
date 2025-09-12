@@ -242,7 +242,7 @@ function assessmentReducer(state, action) {
   }
 }
 
-// Archetypes (dipersingkat; tetap sama seperti file kamu sebelumnya)
+// Archetypes (condensed; same as previous file)
 export const ENTREPRENEUR_ARCHETYPES = {
   "visionary-builder": {
     name: "Visionary Builder",
@@ -440,12 +440,12 @@ export function AssessmentProvider({ children }) {
       });
   };
 
-  // ✅ Alias untuk kompatibilitas lama — mencegah error "updateAssessmentData is not a function"
+  // ✅ Alias for backward compatibility — prevents "updateAssessmentData is not a function" error
   const updateAssessmentData = (phase, data) => {
     updatePhaseData(phase, data);
   };
 
-  // Archetype (dipersingkat sesuai file kamu)
+  // Archetype (condensed to match your file)
   const generateRecommendations = (archetype, responses) => {
     return {
       businessTypes: ENTREPRENEUR_ARCHETYPES[archetype].examples,

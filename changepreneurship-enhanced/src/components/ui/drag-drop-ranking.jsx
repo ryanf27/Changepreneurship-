@@ -10,7 +10,7 @@ import { GripVertical, ArrowUp, ArrowDown, CheckCircle } from "lucide-react";
  * props:
  *  - options: [{ value: string, label: string }]
  *  - value:   array of:
- *      * ["v1","v2"...] atau
+ *      * ["v1","v2"...] or
  *      * [{ value, label?, rank? }, ...]
  *  - onChange: (formattedRankings) => void
  *      formattedRankings: [{ value, label, rank }, ...]
@@ -22,34 +22,34 @@ const DragDropRanking = ({
   onChange,
   maxRankings = null,
 }) => {
-  // Peta cepat value -> option
+  // Quick map of value -> option
   const optionMap = useMemo(() => {
     const m = new Map();
     options.forEach((o) => m.set(o.value, o));
     return m;
   }, [options]);
 
-  // Normalisasi value dari props jadi array nilai ["v1","v2"...] sesuai urutan
+  // Normalize value from props into an ordered array of values ["v1","v2"...]
   const normalizedIncoming = useMemo(() => {
     if (!Array.isArray(value)) return [];
-    // jika datangnya objek {value, rank}, urutkan dulu
+    // if incoming objects have {value, rank}, sort them first
     if (value.length && typeof value[0] === "object") {
       const sorted = [...value].sort((a, b) => (a.rank || 0) - (b.rank || 0));
       return sorted.map((x) => x.value).filter((v) => optionMap.has(v));
     }
-    // jika sudah array of strings
+    // if already an array of strings
     return value.filter((v) => optionMap.has(v));
   }, [value, optionMap]);
 
-  // State lokal
+  // Local state
   const [rankings, setRankings] = useState([]); // array of { value, label }
   const [unrankedItems, setUnrankedItems] = useState([]); // array of { value, label }
   const [dragged, setDragged] = useState(null); // { value, source: 'ranked'|'unranked' }
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
-  // Sinkronisasi awal/ketika props berubah, tapi hanya kalau beda
+  // Initial sync/when props change, but only if different
   useEffect(() => {
-    // urutan saat ini di state
+    // current order in state
     const currentValues = rankings.map((r) => r.value);
     if (!arraysEqual(currentValues, normalizedIncoming)) {
       const nextRankings = normalizedIncoming.map((v) => ({
@@ -63,7 +63,7 @@ const DragDropRanking = ({
       setRankings(nextRankings);
       setUnrankedItems(nextUnranked);
     } else {
-      // tetap pastikan unranked terjaga saat options berubah
+      // still ensure unranked items are preserved when options change
       const rankedSet = new Set(currentValues);
       const nextUnranked = options
         .filter((o) => !rankedSet.has(o.value))
@@ -80,7 +80,7 @@ const DragDropRanking = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedIncoming, options, optionMap]);
 
-  // Util untuk emit ke parent sekali tiap perubahan nyata
+    // Utility to emit to parent once per actual change
   const emit = (list) => {
     if (typeof onChange !== "function") return;
     const formatted = list.map((item, idx) => ({
@@ -103,7 +103,7 @@ const DragDropRanking = ({
   const lastOverRef = useRef(-1);
   const onDragOverRankedGap = (e, index) => {
     e.preventDefault();
-    // hanya update highlight kalau index berubah (hemat render)
+    // only update highlight if the index changes (save render)
     if (lastOverRef.current !== index) {
       lastOverRef.current = index;
       setDragOverIndex(index);
@@ -127,7 +127,7 @@ const DragDropRanking = ({
         setDragged(null);
         return;
       }
-      // Tambah dari unranked ke ranked pada posisi targetIndex
+      // Add from unranked to ranked at the targetIndex
       const newRankings = [...rankings];
       newRankings.splice(targetIndex, 0, {
         value: dragged.value,
@@ -137,7 +137,7 @@ const DragDropRanking = ({
       setUnrankedItems((prev) => prev.filter((u) => u.value !== dragged.value));
       emit(newRankings);
     } else {
-      // Reorder sesama ranked
+      // Reorder within ranked items
       const from = rankings.findIndex((r) => r.value === dragged.value);
       if (from === -1 || from === targetIndex) {
         setDragged(null);
@@ -170,9 +170,9 @@ const DragDropRanking = ({
     const newRankings = rankings.filter((_, i) => i !== idx);
     setRankings(newRankings);
     setUnrankedItems((prev) => {
-      // hindari duplikat
+      // avoid duplicates
       if (prev.some((u) => u.value === removed.value)) return prev;
-      // pastikan ada di options
+      // ensure it exists in options
       const opt = optionMap.get(removed.value);
       return opt ? [...prev, { value: opt.value, label: opt.label }] : prev;
     });
@@ -180,7 +180,7 @@ const DragDropRanking = ({
     setDragged(null);
   };
 
-  // Klik tombol
+  // Button click
   const moveItem = (fromIndex, dir) => {
     const to = fromIndex + (dir === "up" ? -1 : 1);
     if (to < 0 || to >= rankings.length) return;
@@ -205,7 +205,7 @@ const DragDropRanking = ({
     if (idx === -1) return;
     const next = rankings.filter((r) => r.value !== val);
     setRankings(next);
-    // kembalikan ke unranked jika memang bagian dari options
+    // return to unranked if it's part of options
     const opt = optionMap.get(val);
     if (opt) {
       setUnrankedItems((prev) =>
@@ -219,14 +219,14 @@ const DragDropRanking = ({
 
   return (
     <div className="space-y-6">
-      {/* Petunjuk */}
+      {/* Instructions */}
       <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-        <div className="font-medium mb-1">Cara mengurutkan:</div>
+        <div className="font-medium mb-1">How to rank:</div>
         <ul className="space-y-1">
-          <li>• Drag item dari daftar “Available Options” ke “Your Ranking”</li>
-          <li>• Gunakan tombol panah atau drag untuk mengubah urutan</li>
-          <li>• Seret kembali ke bawah untuk menghapus dari ranking</li>
-          {maxRankings && <li>• Maksimal {maxRankings} item</li>}
+          <li>• Drag an item from the “Available Options” list to “Your Ranking”</li>
+          <li>• Use arrow buttons or drag to reorder</li>
+          <li>• Drag back down to remove from ranking</li>
+          {maxRankings && <li>• Max {maxRankings} items</li>}
         </ul>
       </div>
 
@@ -253,7 +253,7 @@ const DragDropRanking = ({
           <div className="space-y-2">
             {rankings.map((item, index) => (
               <div key={item.value}>
-                {/* Gap di atas item */}
+                {/* Gap above item */}
                 <div
                   className={`h-2 transition-all ${
                     dragOverIndex === index ? "bg-primary/20 rounded" : ""
@@ -316,7 +316,7 @@ const DragDropRanking = ({
                   </CardContent>
                 </Card>
 
-                {/* Gap setelah item terakhir */}
+                {/* Gap after the last item */}
                 {index === rankings.length - 1 && (
                   <div
                     className={`h-2 transition-all ${

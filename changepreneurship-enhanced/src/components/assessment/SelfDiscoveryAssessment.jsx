@@ -241,7 +241,7 @@ const SelfDiscoveryAssessment = () => {
   const currentSectionData = sections[currentSectionIndex];
   const CurrentIcon = currentSectionData?.icon;
 
-  // Handle response updates (✅ perbaikan urutan argumen)
+  // Handle response updates (✅ argument order fix)
   const handleResponse = (questionId, answer) => {
     // updateResponse(phase, questionId, answer, section)
     updateResponse("self-discovery", questionId, answer, currentSection);
@@ -260,7 +260,7 @@ const SelfDiscoveryAssessment = () => {
       [currentSection]: progress,
     }));
 
-    // (opsional) Simpan progres ke context agar tracker global akurat
+    // Optional: Save progress to context to keep the global tracker accurate
     const totalSections = sections.filter((s) => s.id !== "results").length;
     const completedSections = Object.values({
       ...sectionProgress,

@@ -186,7 +186,7 @@ const SelfDiscoveryAssessment = () => {
   const currentSectionData = sections[currentSectionIndex]
   const CurrentIcon = currentSectionData?.icon
 
-  // Handle response updates (✅ perbaikan urutan argumen)
+  // Handle response updates (✅ argument order fix)
   const handleResponse = (questionId, answer) => {
     // updateResponse(phase, questionId, answer, section)
     updateResponse('self-discovery', questionId, answer, currentSection)
@@ -202,7 +202,7 @@ const SelfDiscoveryAssessment = () => {
       [currentSection]: progress
     }))
 
-    // (opsional) Simpan progres ke context agar tracker global akurat
+    // Optional: Save progress to context to keep the global tracker accurate
     const totalSections = sections.filter(s => s.id !== 'results').length
     const completedSections = Object.values({
       ...sectionProgress,
@@ -212,19 +212,19 @@ const SelfDiscoveryAssessment = () => {
     updateProgress('self-discovery', overall)
   }
 
-  // Handle data import optimization (✅ perbaikan urutan argumen)
+  // Handle data import optimization (✅ fixed argument order)
   const handleOptimization = (sources) => {
     setConnectedSources(sources)
     setIsOptimized(true)
     setShowDataImport(false)
     
-    // Simulasi pre-populate
+    // Simulate pre-population
     if (sources.includes('linkedin')) {
       // motivation → questionId: 'primary-motivation'
       updateResponse('self-discovery', 'primary-motivation', 'solve-problems', 'motivation')
     }
     if (sources.includes('financial')) {
-      // confidence → questionId: 'vision-confidence' (angka 7)
+      // confidence → questionId: 'vision-confidence' (number 7)
       updateResponse('self-discovery', 'vision-confidence', 7, 'confidence')
     }
   }
