@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   Routes,
   Route,
   Navigate,
@@ -62,6 +62,7 @@ import AdaptiveDemo from "./components/AdaptiveDemo";
 import SimpleAdaptiveDemo from "./components/SimpleAdaptiveDemo";
 import ProfileSettings from "./components/ProfileSettings";
 import AssessmentHistory from "./components/AssessmentHistory";
+import NavBar from "./components/NavBar";
 
 const AssessmentPage = () => {
   const { assessmentData, currentPhase, updatePhase } = useAssessment();
@@ -290,6 +291,7 @@ function App() {
       <AssessmentProvider>
         <Router>
           <div className="App">
+            <NavBar />
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/assessment" element={<AssessmentPage />} />
