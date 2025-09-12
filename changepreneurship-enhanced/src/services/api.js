@@ -188,6 +188,11 @@ class ApiService {
       method: "GET",
       headers: this.getHeaders(),
     });
+
+    if (res.status === 404) {
+      return { success: true, data: { user: null, profile: null } };
+    }
+
     return this.handleResponse(res);
   }
 
