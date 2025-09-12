@@ -40,6 +40,10 @@ import {
 } from "lucide-react";
 import "./App.css";
 
+// Navigation utilities
+import { NavigationProvider } from "./contexts/NavigationContext.jsx";
+import QuestionNavigator from "./components/navigation/QuestionNavigator.jsx";
+
 // Contexts
 import { AuthProvider } from "./contexts/AuthContext";
 import {
@@ -289,27 +293,34 @@ function App() {
   return (
     <AuthProvider>
       <AssessmentProvider>
-        <Router>
-          <div className="App">
-            <NavBar />
-            <main className="pt-16">
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/assessment" element={<AssessmentPage />} />
-                <Route
-                  path="/ai-recommendations"
-                  element={<AIRecommendationsSimple />}
-                />
-                <Route path="/user-dashboard" element={<UserDashboard />} />
-                <Route path="/adaptive-demo" element={<AdaptiveDemo />} />
-                <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
-                <Route path="/profile" element={<ProfileSettings />} />
-                <Route path="/assessment-history" element={<AssessmentHistory />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-          </div>
-        </Router>
+        <NavigationProvider>
+          <Router>
+            <div className="App">
+              <NavBar />
+              <main className="pt-16">
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/assessment" element={<AssessmentPage />} />
+                  <Route
+                    path="/ai-recommendations"
+                    element={<AIRecommendationsSimple />}
+                  />
+                  <Route path="/user-dashboard" element={<UserDashboard />} />
+                  <Route path="/adaptive-demo" element={<AdaptiveDemo />} />
+                  <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
+                  <Route path="/profile" element={<ProfileSettings />} />
+                  <Route path="/assessment-history" element={<AssessmentHistory />} />
+                  <Route
+                    path="/phase/:phase/tab/:tab/section/:section/question/:question"
+                    element={<QuestionNavigator />}
+                  />
+                  <Route path="/:code" element={<QuestionNavigator />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+            </div>
+          </Router>
+        </NavigationProvider>
       </AssessmentProvider>
     </AuthProvider>
   );
