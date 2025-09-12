@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Zap } from "lucide-react";
 
 export default function DataImportBanner({ onOptimize, onDismiss }) {
+  const [selected, setSelected] = useState([]);
+
+  const toggleSource = (id) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
+
   return (
     <Card className="border-2 border-orange-400/70">
       <CardContent className="p-5 md:p-6">
@@ -40,13 +48,25 @@ export default function DataImportBanner({ onOptimize, onDismiss }) {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <Badge variant="outline" className="px-3 py-1 cursor-pointer">
+          <Badge
+            variant={selected.includes("linkedin") ? "default" : "outline"}
+            className="px-3 py-1 cursor-pointer"
+            onClick={() => toggleSource("linkedin")}
+          >
             LinkedIn Profile
           </Badge>
-          <Badge variant="outline" className="px-3 py-1 cursor-pointer">
+          <Badge
+            variant={selected.includes("financial") ? "default" : "outline"}
+            className="px-3 py-1 cursor-pointer"
+            onClick={() => toggleSource("financial")}
+          >
             $ Financial Data
           </Badge>
-          <Badge variant="outline" className="px-3 py-1 cursor-pointer">
+          <Badge
+            variant={selected.includes("resume") ? "default" : "outline"}
+            className="px-3 py-1 cursor-pointer"
+            onClick={() => toggleSource("resume")}
+          >
             Resume / CV
           </Badge>
         </div>
@@ -54,7 +74,8 @@ export default function DataImportBanner({ onOptimize, onDismiss }) {
         <div className="mt-4 flex flex-col sm:flex-row gap-2">
           <Button
             className="flex-1"
-            onClick={() => onOptimize?.(["linkedin", "financial"])}
+            onClick={() => onOptimize?.(selected)}
+            disabled={selected.length === 0}
           >
             Start Optimized Assessment
           </Button>
