@@ -8,7 +8,7 @@ import { fromCode, toCode, getNext, getPrev } from '../../lib/navigation.js';
 const QuestionNavigator = () => {
   const params = useParams();
   const navigate = useNavigate();
-  const { structure, path, navigateTo } = useNavigation();
+  const { structure, path, navigateTo, markVisited } = useNavigation();
   const [questions, setQuestions] = useState([]);
 
   useEffect(() => {
@@ -36,6 +36,11 @@ const QuestionNavigator = () => {
   const phaseNode = structure.find((p) => p.code === path.phase);
   const tabNode = phaseNode?.tabs.find((t) => t.code === path.tab);
   const sectionNode = tabNode?.sections.find((s) => s.code === path.section);
+  const questionNode = sectionNode?.questions.find((q) => q.code === path.question);
+
+  useEffect(() => {
+    if (questionNode) markVisited(questionNode.id);
+  }, [questionNode, markVisited]);
 
   useEffect(() => {
     if (!sectionNode) return;
@@ -60,8 +65,14 @@ const QuestionNavigator = () => {
   const offsetY = startIndex * ITEM_HEIGHT;
   const visible = questions.slice(startIndex, endIndex);
 
-  const next = getNext(path, structure);
-  const prev = getPrev(path, structure);
+  const nextPhase = getNext(path, structure, 'phase');
+  const prevPhase = getPrev(path, structure, 'phase');
+  const nextTab = getNext(path, structure, 'tab');
+  const prevTab = getPrev(path, structure, 'tab');
+  const nextSection = getNext(path, structure, 'section');
+  const prevSection = getPrev(path, structure, 'section');
+  const nextQuestion = getNext(path, structure, 'question');
+  const prevQuestion = getPrev(path, structure, 'question');
 
   if (!structure.length) return null;
 
@@ -101,10 +112,32 @@ const QuestionNavigator = () => {
         </Suspense>
       </div>
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={() => navigateTo(prev)}>Prev</Button>
-        <span>{toCode(path)}</span>
-        <Button onClick={() => navigateTo(next)}>Next</Button>
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={() => navigateTo(prevPhase)}>
+            Prev Phase
+          </Button>
+          <Button onClick={() => navigateTo(nextPhase)}>Next Phase</Button>
+        </div>
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={() => navigateTo(prevTab)}>
+            Prev Tab
+          </Button>
+          <Button onClick={() => navigateTo(nextTab)}>Next Tab</Button>
+        </div>
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={() => navigateTo(prevSection)}>
+            Prev Section
+          </Button>
+          <Button onClick={() => navigateTo(nextSection)}>Next Section</Button>
+        </div>
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={() => navigateTo(prevQuestion)}>
+            Prev Question
+          </Button>
+          <span>{toCode(path)}</span>
+          <Button onClick={() => navigateTo(nextQuestion)}>Next Question</Button>
+        </div>
       </div>
     </div>
   );
