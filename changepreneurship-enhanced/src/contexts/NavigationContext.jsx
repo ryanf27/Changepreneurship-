@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { fromCode, toCode, normalizePath } from '../lib/navigation.js';
+import { normalizePath } from '../lib/navigation.js';
 import { getNavigationStructure } from '../lib/navigation-structure.js';
 
 const NavigationContext = createContext();
@@ -7,6 +7,12 @@ const NavigationContext = createContext();
 export const NavigationProvider = ({ children }) => {
   const [structure, setStructure] = useState([]);
   const [path, setPath] = useState({ phase: 1, tab: 1, section: 1, question: 1 });
+  const [ids, setIds] = useState({
+    phaseId: '',
+    tabId: '',
+    sectionId: '',
+    questionId: '',
+  });
 
   useEffect(() => {
     getNavigationStructure().then(setStructure);
@@ -14,18 +20,21 @@ export const NavigationProvider = ({ children }) => {
 
   useEffect(() => {
     if (!structure.length) return;
-    const saved = fromCode(localStorage.getItem('lastLocation') || '');
-    const normalized = normalizePath(saved, structure);
-    setPath(normalized);
+    const saved = JSON.parse(localStorage.getItem('lastLocation') || '{}');
+    const { codes, ids } = normalizePath(saved, structure);
+    setPath(codes);
+    setIds(ids);
   }, [structure]);
 
   useEffect(() => {
     if (!structure.length) return;
-    localStorage.setItem('lastLocation', toCode(path));
-  }, [path, structure]);
+    localStorage.setItem('lastLocation', JSON.stringify(ids));
+  }, [ids, structure]);
 
   const navigateTo = (next) => {
-    setPath(normalizePath(next, structure));
+    const { codes, ids } = normalizePath(next, structure);
+    setPath(codes);
+    setIds(ids);
   };
 
   return (

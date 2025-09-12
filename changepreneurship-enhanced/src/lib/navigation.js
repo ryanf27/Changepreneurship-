@@ -11,24 +11,39 @@ export function fromCode(code) {
 // structure nodes have shape { code:number, order:number, id:string, tabs:[...], sections:[...], questions:[...] }
 export function normalizePath(path, structure) {
   const phase =
-    structure.find((p) => p.code === (path.phase || path.p)) || structure[0];
+    structure.find(
+      (p) => p.id === path.phaseId || p.code === (path.phase || path.p)
+    ) || structure[0];
   const tab =
-    phase.tabs.find((t) => t.code === (path.tab || path.t)) || phase.tabs[0];
+    phase.tabs.find(
+      (t) => t.id === path.tabId || t.code === (path.tab || path.t)
+    ) || phase.tabs[0];
   const section =
-    tab.sections.find((s) => s.code === (path.section || path.s)) || tab.sections[0];
+    tab.sections.find(
+      (s) => s.id === path.sectionId || s.code === (path.section || path.s)
+    ) || tab.sections[0];
   const question =
-    section.questions.find((q) => q.code === (path.question || path.q)) ||
-    section.questions[0];
+    section.questions.find(
+      (q) => q.id === path.questionId || q.code === (path.question || path.q)
+    ) || section.questions[0];
   return {
-    phase: phase.code,
-    tab: tab.code,
-    section: section.code,
-    question: question.code,
+    codes: {
+      phase: phase.code,
+      tab: tab.code,
+      section: section.code,
+      question: question.code,
+    },
+    ids: {
+      phaseId: phase.id,
+      tabId: tab.id,
+      sectionId: section.id,
+      questionId: question.id,
+    },
   };
 }
 
 export function getNext(path, structure) {
-  const { phase, tab, section, question } = normalizePath(path, structure);
+  const { phase, tab, section, question } = normalizePath(path, structure).codes;
   const phaseNode = structure.find((p) => p.code === phase);
   const tabNode = phaseNode.tabs.find((t) => t.code === tab);
   const sectionNode = tabNode.sections.find((s) => s.code === section);
@@ -58,7 +73,7 @@ export function getNext(path, structure) {
 }
 
 export function getPrev(path, structure) {
-  const { phase, tab, section, question } = normalizePath(path, structure);
+  const { phase, tab, section, question } = normalizePath(path, structure).codes;
   const phaseNode = structure.find((p) => p.code === phase);
   const tabNode = phaseNode.tabs.find((t) => t.code === tab);
   const sectionNode = tabNode.sections.find((s) => s.code === section);
