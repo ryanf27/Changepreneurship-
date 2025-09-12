@@ -67,6 +67,7 @@ import SimpleAdaptiveDemo from "./components/SimpleAdaptiveDemo";
 import ProfileSettings from "./components/ProfileSettings";
 import AssessmentHistory from "./components/AssessmentHistory";
 import NavBar from "./components/NavBar";
+import PhasePage from "./pages/PhasePage.jsx";
 
 const AssessmentPage = () => {
   const { assessmentData, currentPhase, updatePhase } = useAssessment();
@@ -310,6 +311,10 @@ function App() {
                   <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
                   <Route path="/profile" element={<ProfileSettings />} />
                   <Route path="/assessment-history" element={<AssessmentHistory />} />
+                  <Route
+                    path="/new/:phaseId/:tabId/:sectionId/:questionId"
+                    element={<PhasePage />}
+                  />
                   <Route
                     path="/phase/:phase/tab/:tab/section/:section/question/:question"
                     element={<QuestionNavigator />}
