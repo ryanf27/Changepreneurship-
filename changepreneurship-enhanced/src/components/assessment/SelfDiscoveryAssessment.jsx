@@ -38,6 +38,8 @@ import {
   ENTREPRENEUR_ARCHETYPES,
 } from "../../contexts/AssessmentContext";
 import DataImportBanner from "../adaptive/DataImportBanner";
+import DataDrivenAdaptiveEngine from "../../contexts/DataDrivenAdaptiveEngine";
+import api from "../../services/api.js";
 
 // Question definitions
 const motivationQuestions = [
@@ -268,26 +270,45 @@ const SelfDiscoveryAssessment = () => {
     updateProgress("self-discovery", overall);
   };
 
-  // Handle data import optimization (✅ perbaikan urutan argumen)
-  const handleOptimization = (sources) => {
-    setConnectedSources(sources);
-    setIsOptimized(true);
+  // Handle data import optimization using imported data
+  const handleOptimization = async (sources = []) => {
     setShowDataImport(false);
 
-    // Simulasi pre-populate
-    if (sources.includes("linkedin")) {
-      // motivation → questionId: 'primary-motivation'
-      updateResponse(
-        "self-discovery",
-        "primary-motivation",
-        "solve-problems",
-        "motivation"
-      );
+    const importedData = {};
+    const successful = [];
+
+    for (const source of sources) {
+      try {
+        let result;
+        if (source === "linkedin") result = await api.connectLinkedIn();
+        if (source === "resume") result = await api.uploadResume();
+        if (source === "financial")
+          result = await api.connectFinancialAccounts();
+
+        if (result?.success && result.data) {
+          importedData[source] = result.data;
+          successful.push(source);
+        }
+      } catch {
+        // ignore individual source errors
+      }
     }
-    if (sources.includes("financial")) {
-      // confidence → questionId: 'vision-confidence' (angka 7)
-      updateResponse("self-discovery", "vision-confidence", 7, "confidence");
-    }
+
+    const engine = new DataDrivenAdaptiveEngine();
+    sections.forEach((section) => {
+      section.questions.forEach((q) => {
+        const pre = engine.importEngine.prePopulateFromData(
+          q.id,
+          importedData
+        );
+        if (pre) {
+          updateResponse("self-discovery", q.id, pre.value, section.id);
+        }
+      });
+    });
+
+    setConnectedSources(successful);
+    setIsOptimized(true);
   };
 
   // Navigation

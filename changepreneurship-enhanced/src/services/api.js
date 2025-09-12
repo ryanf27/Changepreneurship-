@@ -397,6 +397,54 @@ class ApiService {
     return this.request('/principles/stages');
   }
 
+  // ==================== DATA IMPORT METHODS ====================
+
+  /**
+   * Connect and import LinkedIn data
+   * @returns {Promise<Object>} Parsed LinkedIn data
+   */
+  async connectLinkedIn(payload = {}) {
+    return this.request('/data/import/linkedin', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  /**
+   * Upload and parse resume file
+   * @param {File} file - Resume file uploaded by user
+   * @returns {Promise<Object>} Parsed resume data
+   */
+  async uploadResume(file) {
+    try {
+      const formData = new FormData();
+      if (file) formData.append('file', file);
+      const headers = this.sessionToken
+        ? { Authorization: `Bearer ${this.sessionToken}` }
+        : {};
+      const res = await fetch(`${API_BASE_URL}/data/import/resume`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      return this.handleResponse(res);
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Connect financial accounts or upload statements
+   * @param {Object} payload - Connection or upload details
+   * @returns {Promise<Object>} Parsed financial data
+   */
+  async connectFinancialAccounts(payload = {}) {
+    return this.request('/data/import/financial', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
   // ==================== UTILITY METHODS ====================
 
   /**
