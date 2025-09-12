@@ -7,6 +7,13 @@ const NavigationContext = createContext();
 export const NavigationProvider = ({ children }) => {
   const [structure, setStructure] = useState([]);
   const [path, setPath] = useState({ phase: 1, tab: 1, section: 1, question: 1 });
+  const [progress, setProgress] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('questionProgress')) || {};
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     getNavigationStructure().then(setStructure);
@@ -24,12 +31,20 @@ export const NavigationProvider = ({ children }) => {
     localStorage.setItem('lastLocation', toCode(path));
   }, [path, structure]);
 
+  useEffect(() => {
+    localStorage.setItem('questionProgress', JSON.stringify(progress));
+  }, [progress]);
+
   const navigateTo = (next) => {
     setPath(normalizePath(next, structure));
   };
 
+  const markVisited = (id) => {
+    setProgress((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  };
+
   return (
-    <NavigationContext.Provider value={{ structure, path, navigateTo }}>
+    <NavigationContext.Provider value={{ structure, path, navigateTo, progress, markVisited }}>
       {children}
     </NavigationContext.Provider>
   );
