@@ -292,20 +292,22 @@ function App() {
         <Router>
           <div className="App">
             <NavBar />
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/assessment" element={<AssessmentPage />} />
-              <Route
-                path="/ai-recommendations"
-                element={<AIRecommendationsSimple />}
-              />
-              <Route path="/user-dashboard" element={<UserDashboard />} />
-              <Route path="/adaptive-demo" element={<AdaptiveDemo />} />
-              <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
-              <Route path="/profile" element={<ProfileSettings />} />
-              <Route path="/assessment-history" element={<AssessmentHistory />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+            <main className="pt-16">
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/assessment" element={<AssessmentPage />} />
+                <Route
+                  path="/ai-recommendations"
+                  element={<AIRecommendationsSimple />}
+                />
+                <Route path="/user-dashboard" element={<UserDashboard />} />
+                <Route path="/adaptive-demo" element={<AdaptiveDemo />} />
+                <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
+                <Route path="/profile" element={<ProfileSettings />} />
+                <Route path="/assessment-history" element={<AssessmentHistory />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
           </div>
         </Router>
       </AssessmentProvider>

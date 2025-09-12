@@ -9,14 +9,24 @@ const NavBar = () => {
   if (location.pathname === "/") return null;
 
   return (
-    <div className="fixed top-4 left-4 z-50 flex gap-2">
-      <Button variant="outline" onClick={() => navigate(-1)}>
-        Back
-      </Button>
-      <Button variant="outline" onClick={() => navigate("/")}>
-        Home
-      </Button>
-    </div>
+    <header className="sticky top-0 w-full z-40 bg-background/80 backdrop-blur">
+      <div className="container mx-auto flex gap-2 p-4">
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+        >
+          Back
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => navigate("/")}
+          aria-label="Go home"
+        >
+          Home
+        </Button>
+      </div>
+    </header>
   );
 };
 
