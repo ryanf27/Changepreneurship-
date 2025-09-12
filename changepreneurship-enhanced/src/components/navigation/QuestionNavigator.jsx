@@ -3,12 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigation } from '../../contexts/NavigationContext.jsx';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '../ui/breadcrumb.jsx';
 import { Button } from '../ui/button.jsx';
-import { fromCode, toCode, getNext, getPrev } from '../../lib/navigation.js';
+import {
+  fromCode,
+  toCode,
+  getNextPhase,
+  getPrevPhase,
+  getNextTab,
+  getPrevTab,
+  getNextSection,
+  getPrevSection,
+  getNextQuestion,
+  getPrevQuestion,
+} from '../../lib/navigation.js';
 
 const QuestionNavigator = () => {
   const params = useParams();
   const navigate = useNavigate();
-  const { structure, path, navigateTo, markVisited } = useNavigation();
+  const { structure, path, navigateTo, markVisited, progress } = useNavigation();
   const [questions, setQuestions] = useState([]);
 
   useEffect(() => {
@@ -65,14 +76,39 @@ const QuestionNavigator = () => {
   const offsetY = startIndex * ITEM_HEIGHT;
   const visible = questions.slice(startIndex, endIndex);
 
-  const nextPhase = getNext(path, structure, 'phase');
-  const prevPhase = getPrev(path, structure, 'phase');
-  const nextTab = getNext(path, structure, 'tab');
-  const prevTab = getPrev(path, structure, 'tab');
-  const nextSection = getNext(path, structure, 'section');
-  const prevSection = getPrev(path, structure, 'section');
-  const nextQuestion = getNext(path, structure, 'question');
-  const prevQuestion = getPrev(path, structure, 'question');
+  const nextPhase = getNextPhase(path, structure);
+  const prevPhase = getPrevPhase(path, structure);
+  const nextTab = getNextTab(path, structure);
+  const prevTab = getPrevTab(path, structure);
+  const nextSection = getNextSection(path, structure);
+  const prevSection = getPrevSection(path, structure);
+  const nextQuestion = getNextQuestion(path, structure);
+  const prevQuestion = getPrevQuestion(path, structure);
+
+  const sectionAnswered = sectionNode?.questions.filter((q) => progress[q.id]).length || 0;
+  const sectionTotal = sectionNode?.questions.length || 0;
+  const tabCounts = tabNode
+    ? tabNode.sections.reduce(
+        (acc, s) => {
+          acc.answered += s.questions.filter((q) => progress[q.id]).length;
+          acc.total += s.questions.length;
+          return acc;
+        },
+        { answered: 0, total: 0 }
+      )
+    : { answered: 0, total: 0 };
+  const phaseCounts = phaseNode
+    ? phaseNode.tabs.reduce(
+        (acc, t) => {
+          t.sections.forEach((s) => {
+            acc.answered += s.questions.filter((q) => progress[q.id]).length;
+            acc.total += s.questions.length;
+          });
+          return acc;
+        },
+        { answered: 0, total: 0 }
+      )
+    : { answered: 0, total: 0 };
 
   if (!structure.length) return null;
 
@@ -97,6 +133,22 @@ const QuestionNavigator = () => {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+
+      <div className="text-sm space-y-1">
+        <div>
+          Phase Progress: {phaseCounts.total > 0
+            ? Math.round((phaseCounts.answered / phaseCounts.total) * 100)
+            : 0}%
+        </div>
+        <div>
+          Tab Progress: {tabCounts.total > 0
+            ? Math.round((tabCounts.answered / tabCounts.total) * 100)
+            : 0}%
+        </div>
+        <div>
+          Section Progress: {sectionAnswered}/{sectionTotal}
+        </div>
+      </div>
 
       <div className="border rounded h-64 overflow-auto" onScroll={onScroll}>
         <Suspense fallback={<div>Loading...</div>}>

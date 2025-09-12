@@ -157,3 +157,13 @@ export function getPrev(path, structure, level = 'question') {
   return getPrev({ phase, tab, section, question }, structure, 'section');
 }
 
+// Convenience wrappers for specific levels
+export const getNextPhase = (path, structure) => getNext(path, structure, 'phase');
+export const getPrevPhase = (path, structure) => getPrev(path, structure, 'phase');
+export const getNextTab = (path, structure) => getNext(path, structure, 'tab');
+export const getPrevTab = (path, structure) => getPrev(path, structure, 'tab');
+export const getNextSection = (path, structure) => getNext(path, structure, 'section');
+export const getPrevSection = (path, structure) => getPrev(path, structure, 'section');
+export const getNextQuestion = (path, structure) => getNext(path, structure, 'question');
+export const getPrevQuestion = (path, structure) => getPrev(path, structure, 'question');
+
