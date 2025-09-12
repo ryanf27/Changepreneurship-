@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  Link,
 } from "react-router-dom";
 import { Button } from "@/components/ui/button.jsx";
 import {
@@ -40,6 +41,11 @@ import {
 } from "lucide-react";
 import "./App.css";
 
+// Navigation utilities
+import { NavigationProvider, useNavigation } from "./contexts/NavigationContext.jsx";
+import QuestionNavigator from "./components/navigation/QuestionNavigator.jsx";
+import { toCode } from "./lib/navigation.js";
+
 // Contexts
 import { AuthProvider } from "./contexts/AuthContext";
 import {
@@ -66,6 +72,13 @@ import NavBar from "./components/NavBar";
 
 const AssessmentPage = () => {
   const { assessmentData, currentPhase, updatePhase } = useAssessment();
+  const { path } = useNavigation();
+
+  const ContinueButton = () => (
+    <Link to={`/${toCode(path)}`}>
+      <Button className="mt-4">Continue Assessment</Button>
+    </Link>
+  );
 
   // Check for URL parameters to set initial phase
   useEffect(() => {
@@ -186,6 +199,7 @@ const AssessmentPage = () => {
             Transform your entrepreneurial journey with our comprehensive 7-part
             framework
           </p>
+          <ContinueButton />
         </div>
 
         {/* Progress Overview */}
@@ -289,27 +303,34 @@ function App() {
   return (
     <AuthProvider>
       <AssessmentProvider>
-        <Router>
-          <div className="App">
-            <NavBar />
-            <main className="pt-16">
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/assessment" element={<AssessmentPage />} />
-                <Route
-                  path="/ai-recommendations"
-                  element={<AIRecommendationsSimple />}
-                />
-                <Route path="/user-dashboard" element={<UserDashboard />} />
-                <Route path="/adaptive-demo" element={<AdaptiveDemo />} />
-                <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
-                <Route path="/profile" element={<ProfileSettings />} />
-                <Route path="/assessment-history" element={<AssessmentHistory />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-          </div>
-        </Router>
+        <NavigationProvider>
+          <Router>
+            <div className="App">
+              <NavBar />
+              <main className="pt-16">
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/assessment" element={<AssessmentPage />} />
+                  <Route
+                    path="/ai-recommendations"
+                    element={<AIRecommendationsSimple />}
+                  />
+                  <Route path="/user-dashboard" element={<UserDashboard />} />
+                  <Route path="/adaptive-demo" element={<AdaptiveDemo />} />
+                  <Route path="/simple-adaptive" element={<SimpleAdaptiveDemo />} />
+                  <Route path="/profile" element={<ProfileSettings />} />
+                  <Route path="/assessment-history" element={<AssessmentHistory />} />
+                  <Route
+                    path="/phase/:phase/tab/:tab/section/:section/question/:question"
+                    element={<QuestionNavigator />}
+                  />
+                  <Route path="/:code" element={<QuestionNavigator />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+            </div>
+          </Router>
+        </NavigationProvider>
       </AssessmentProvider>
     </AuthProvider>
   );
