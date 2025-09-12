@@ -178,9 +178,7 @@ def get_profile():
 
         profile = EntrepreneurProfile.query.filter_by(user_id=user.id).first()
         if not profile:
-            profile = EntrepreneurProfile(user_id=user.id)
-            db.session.add(profile)
-            db.session.commit()
+            return jsonify({'error': 'Profile not found'}), 404
 
         return jsonify({'user': user.to_dict(), 'profile': profile.to_dict()}), 200
 
