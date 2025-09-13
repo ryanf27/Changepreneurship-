@@ -23,7 +23,7 @@ export const useAssessmentAPI = () => {
         }
       }
       localStorage.setItem('changepreneurship-assessment', JSON.stringify(updatedData))
-      return { success: true }
+      return { success: true, data: null }
     }
 
     try {
@@ -36,8 +36,8 @@ export const useAssessmentAPI = () => {
       })
 
       let assessmentId
-      if (startResponse.ok) {
-        const startData = await startResponse.json()
+      if (startResponse.success) {
+        const startData = startResponse.data
         assessmentId = startData.assessment_id
       } else {
         throw new Error('Failed to start assessment phase')
@@ -47,7 +47,7 @@ export const useAssessmentAPI = () => {
       if (data.responses) {
         for (const [section, sectionResponses] of Object.entries(data.responses)) {
           for (const [questionId, response] of Object.entries(sectionResponses)) {
-            await apiCall(`/assessment/${assessmentId}/response`, {
+            const responseResult = await apiCall(`/assessment/${assessmentId}/response`, {
               method: 'POST',
               body: JSON.stringify({
                 question_id: `${section}_${questionId}`,
@@ -56,12 +56,16 @@ export const useAssessmentAPI = () => {
                 section: section
               })
             })
+
+            if (!responseResult.success) {
+              throw new Error('Failed to save response')
+            }
           }
         }
       }
 
       // Update progress and completion status
-      await apiCall(`/assessment/${assessmentId}/progress`, {
+      const progressResponse = await apiCall(`/assessment/${assessmentId}/progress`, {
         method: 'PUT',
         body: JSON.stringify({
           progress_percentage: data.progress || 0,
@@ -70,7 +74,13 @@ export const useAssessmentAPI = () => {
         })
       })
 
-      return { success: true, assessmentId }
+      if (!progressResponse.success) {
+        throw new Error('Failed to update progress')
+      }
+
+      const progressData = progressResponse.data || {}
+
+      return { success: true, data: { assessmentId, ...progressData } }
     } catch (err) {
       setError(err.message)
       console.error('Assessment save error:', err)
@@ -92,9 +102,8 @@ export const useAssessmentAPI = () => {
       setError(null)
 
       const response = await apiCall('/assessment/phases')
-      if (response.ok) {
-        const data = await response.json()
-        return data
+      if (response.success) {
+        return response.data
       } else {
         throw new Error('Failed to load assessment data')
       }
@@ -119,7 +128,7 @@ export const useAssessmentAPI = () => {
         }
       }
       localStorage.setItem('changepreneurship-assessment', JSON.stringify(updatedData))
-      return { success: true }
+      return { success: true, data: profileData }
     }
 
     try {
@@ -131,8 +140,8 @@ export const useAssessmentAPI = () => {
         body: JSON.stringify(profileData)
       })
 
-      if (response.ok) {
-        return { success: true }
+      if (response.success) {
+        return { success: true, data: response.data }
       } else {
         throw new Error('Failed to save profile')
       }
@@ -146,44 +155,43 @@ export const useAssessmentAPI = () => {
   }
 
   // Get assessment responses for a specific phase
-  const getAssessmentResponses = async (phaseId) => {
-    if (!isAuthenticated) {
-      const localData = JSON.parse(localStorage.getItem('changepreneurship-assessment') || '{}')
-      return localData.assessmentData?.[phaseId]?.responses || {}
-    }
-
-    try {
-      setLoading(true)
-      setError(null)
-
-      // First get the assessment ID for this phase
-      const phasesResponse = await apiCall('/assessment/phases')
-      if (!phasesResponse.ok) {
-        throw new Error('Failed to get assessment phases')
-      }
-
-      const phasesData = await phasesResponse.json()
-      const phase = phasesData.phases.find(p => p.id === phaseId)
-
-      if (!phase || !phase.assessment_id) {
-        return {}
-      }
-
-      const responsesResponse = await apiCall(`/assessment/${phase.assessment_id}/responses`)
-      if (responsesResponse.ok) {
-        const responsesData = await responsesResponse.json()
-        return responsesData.responses || {}
-      } else {
-        throw new Error('Failed to get assessment responses')
-      }
-    } catch (err) {
-      setError(err.message)
-      console.error('Get responses error:', err)
-      return {}
-    } finally {
-      setLoading(false)
-    }
+  
+const getAssessmentResponses = async (phaseId) => {
+  if (!isAuthenticated) {
+    const localData = JSON.parse(localStorage.getItem('changepreneurship-assessment') || '{}')
+    return localData.assessmentData?.[phaseId]?.responses || {}
   }
+
+  try {
+    setLoading(true)
+    setError(null)
+
+    // First get the assessment ID for this phase
+    const phasesResponse = await apiCall('/assessment/phases')
+    if (!phasesResponse.success) {
+      throw new Error('Failed to get assessment phases')
+    }
+
+    const phase = phasesResponse.data.phases.find(p => p.id === phaseId)
+    if (!phase || !phase.assessment_id) {
+      return {}
+    }
+
+    const responsesResponse = await apiCall(`/assessment/${phase.assessment_id}/responses`)
+    if (responsesResponse.success) {
+      const responsesData = responsesResponse.data
+      return responsesData.responses || {}
+    } else {
+      throw new Error('Failed to get assessment responses')
+    }
+  } catch (err) {
+    setError(err.message)
+    console.error('Get responses error:', err)
+    return {}
+  } finally {
+    setLoading(false)
+  }
+}
 
   // Debounced auto-save function
   const debouncedSave = (() => {
