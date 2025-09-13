@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 
 export const useAssessmentAPI = () => {
@@ -163,13 +163,13 @@ export const useAssessmentAPI = () => {
       }
 
       const phasesData = await phasesResponse.json()
-      const assessment = phasesData.assessments.find(a => a.phase_id === phaseId)
-      
-      if (!assessment) {
+      const phase = phasesData.phases.find(p => p.id === phaseId)
+
+      if (!phase || !phase.assessment_id) {
         return {}
       }
 
-      const responsesResponse = await apiCall(`/assessment/${assessment.id}/responses`)
+      const responsesResponse = await apiCall(`/assessment/${phase.assessment_id}/responses`)
       if (responsesResponse.ok) {
         const responsesData = await responsesResponse.json()
         return responsesData.responses || {}
