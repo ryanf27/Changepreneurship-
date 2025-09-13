@@ -155,44 +155,43 @@ export const useAssessmentAPI = () => {
   }
 
   // Get assessment responses for a specific phase
-  const getAssessmentResponses = async (phaseId) => {
-    if (!isAuthenticated) {
-      const localData = JSON.parse(localStorage.getItem('changepreneurship-assessment') || '{}')
-      return localData.assessmentData?.[phaseId]?.responses || {}
-    }
-
-    try {
-      setLoading(true)
-      setError(null)
-
-      // First get the assessment ID for this phase
-      const phasesResponse = await apiCall('/assessment/phases')
-      if (!phasesResponse.success) {
-        throw new Error('Failed to get assessment phases')
-      }
-
-      const phasesData = phasesResponse.data
-      const assessment = phasesData.assessments.find(a => a.phase_id === phaseId)
-      
-      if (!assessment) {
-        return {}
-      }
-
-      const responsesResponse = await apiCall(`/assessment/${assessment.id}/responses`)
-      if (responsesResponse.success) {
-        const responsesData = responsesResponse.data
-        return responsesData.responses || {}
-      } else {
-        throw new Error('Failed to get assessment responses')
-      }
-    } catch (err) {
-      setError(err.message)
-      console.error('Get responses error:', err)
-      return {}
-    } finally {
-      setLoading(false)
-    }
+  
+const getAssessmentResponses = async (phaseId) => {
+  if (!isAuthenticated) {
+    const localData = JSON.parse(localStorage.getItem('changepreneurship-assessment') || '{}')
+    return localData.assessmentData?.[phaseId]?.responses || {}
   }
+
+  try {
+    setLoading(true)
+    setError(null)
+
+    // First get the assessment ID for this phase
+    const phasesResponse = await apiCall('/assessment/phases')
+    if (!phasesResponse.success) {
+      throw new Error('Failed to get assessment phases')
+    }
+
+    const phase = phasesResponse.data.phases.find(p => p.id === phaseId)
+    if (!phase || !phase.assessment_id) {
+      return {}
+    }
+
+    const responsesResponse = await apiCall(`/assessment/${phase.assessment_id}/responses`)
+    if (responsesResponse.success) {
+      const responsesData = responsesResponse.data
+      return responsesData.responses || {}
+    } else {
+      throw new Error('Failed to get assessment responses')
+    }
+  } catch (err) {
+    setError(err.message)
+    console.error('Get responses error:', err)
+    return {}
+  } finally {
+    setLoading(false)
+  }
+}
 
   // Debounced auto-save function
   const debouncedSave = (() => {
