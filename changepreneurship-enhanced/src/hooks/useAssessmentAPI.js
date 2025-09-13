@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 
 export const useAssessmentAPI = () => {
@@ -35,12 +35,13 @@ export const useAssessmentAPI = () => {
         method: 'POST'
       })
 
-      let assessmentId
-      if (startResponse.ok) {
-        const startData = await startResponse.json()
-        assessmentId = startData.assessment_id
-      } else {
+      if (!startResponse.success) {
         throw new Error('Failed to start assessment phase')
+      }
+
+      const assessmentId = startResponse.data?.assessment?.id
+      if (!assessmentId) {
+        throw new Error('Assessment ID not found')
       }
 
       // Save responses if provided
@@ -50,10 +51,11 @@ export const useAssessmentAPI = () => {
             await apiCall(`/assessment/${assessmentId}/response`, {
               method: 'POST',
               body: JSON.stringify({
-                question_id: `${section}_${questionId}`,
-                response_data: response,
+                section_id: section,
+                question_id: questionId,
+                question_text: data.questionTexts?.[section]?.[questionId],
                 response_type: typeof response === 'object' ? 'complex' : 'simple',
-                section: section
+                response_value: response
               })
             })
           }
@@ -65,7 +67,7 @@ export const useAssessmentAPI = () => {
         method: 'PUT',
         body: JSON.stringify({
           progress_percentage: data.progress || 0,
-          completed: data.completed || false,
+          is_completed: data.completed || false,
           assessment_data: data
         })
       })
@@ -92,11 +94,10 @@ export const useAssessmentAPI = () => {
       setError(null)
 
       const response = await apiCall('/assessment/phases')
-      if (response.ok) {
-        const data = await response.json()
-        return data
+      if (response.success) {
+        return response.data
       } else {
-        throw new Error('Failed to load assessment data')
+        throw new Error(response.error || 'Failed to load assessment data')
       }
     } catch (err) {
       setError(err.message)
@@ -131,10 +132,10 @@ export const useAssessmentAPI = () => {
         body: JSON.stringify(profileData)
       })
 
-      if (response.ok) {
+      if (response.success) {
         return { success: true }
       } else {
-        throw new Error('Failed to save profile')
+        throw new Error(response.error || 'Failed to save profile')
       }
     } catch (err) {
       setError(err.message)
@@ -158,11 +159,11 @@ export const useAssessmentAPI = () => {
 
       // First get the assessment ID for this phase
       const phasesResponse = await apiCall('/assessment/phases')
-      if (!phasesResponse.ok) {
-        throw new Error('Failed to get assessment phases')
+      if (!phasesResponse.success) {
+        throw new Error(phasesResponse.error || 'Failed to get assessment phases')
       }
 
-      const phasesData = await phasesResponse.json()
+      const phasesData = phasesResponse.data
       const assessment = phasesData.assessments.find(a => a.phase_id === phaseId)
       
       if (!assessment) {
@@ -170,11 +171,10 @@ export const useAssessmentAPI = () => {
       }
 
       const responsesResponse = await apiCall(`/assessment/${assessment.id}/responses`)
-      if (responsesResponse.ok) {
-        const responsesData = await responsesResponse.json()
-        return responsesData.responses || {}
+      if (responsesResponse.success) {
+        return responsesResponse.data.responses || {}
       } else {
-        throw new Error('Failed to get assessment responses')
+        throw new Error(responsesResponse.error || 'Failed to get assessment responses')
       }
     } catch (err) {
       setError(err.message)
