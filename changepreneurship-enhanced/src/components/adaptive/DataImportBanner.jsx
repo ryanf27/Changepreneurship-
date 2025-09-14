@@ -118,7 +118,11 @@ export default function DataImportBanner({ onOptimize, onDismiss }) {
           >
             Start Optimized Assessment
           </Button>
-          <Button className="flex-1" variant="secondary">
+          <Button
+            className="flex-1"
+            variant="secondary"
+            onClick={onDismiss}
+          >
             Continue Without Optimization
           </Button>
         </div>
