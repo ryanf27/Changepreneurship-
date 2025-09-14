@@ -271,17 +271,18 @@ const SelfDiscoveryAssessment = () => {
   };
 
   // Handle data import optimization using imported data
-  const handleOptimization = async (sources = []) => {
+  const handleOptimization = async (sources = {}) => {
     setShowDataImport(false);
 
     const importedData = {};
     const successful = [];
 
-    for (const source of sources) {
+    for (const [source, file] of Object.entries(sources)) {
       try {
         let result;
-        if (source === "linkedin") result = await api.connectLinkedIn();
-        if (source === "resume") result = await api.uploadResume();
+        if (source === "linkedin" && file)
+          result = await api.uploadLinkedInData(file);
+        if (source === "resume" && file) result = await api.uploadResume(file);
         if (source === "financial")
           result = await api.connectFinancialAccounts();
 

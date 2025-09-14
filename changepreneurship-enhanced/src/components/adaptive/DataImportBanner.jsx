@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
@@ -6,11 +6,35 @@ import { Zap } from "lucide-react";
 
 export default function DataImportBanner({ onOptimize, onDismiss }) {
   const [selected, setSelected] = useState([]);
+  const [files, setFiles] = useState({ linkedin: null, resume: null });
+  const linkedinInputRef = useRef(null);
+  const resumeInputRef = useRef(null);
 
   const toggleSource = (id) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
-    );
+    if (selected.includes(id)) {
+      setSelected((prev) => prev.filter((s) => s !== id));
+      if (id in files) setFiles((prev) => ({ ...prev, [id]: null }));
+    } else {
+      if (id === "linkedin") linkedinInputRef.current?.click();
+      else if (id === "resume") resumeInputRef.current?.click();
+      else setSelected((prev) => [...prev, id]);
+    }
+  };
+
+  const handleFileChange = (id, event) => {
+    const file = event.target.files?.[0] || null;
+    if (file) {
+      setFiles((prev) => ({ ...prev, [id]: file }));
+      setSelected((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    }
+  };
+
+  const buildSelectedPayload = () => {
+    const payload = {};
+    selected.forEach((id) => {
+      payload[id] = files[id] || true;
+    });
+    return payload;
   };
 
   return (
@@ -71,10 +95,25 @@ export default function DataImportBanner({ onOptimize, onDismiss }) {
           </Badge>
         </div>
 
+        <input
+          type="file"
+          accept="application/pdf"
+          ref={linkedinInputRef}
+          className="hidden"
+          onChange={(e) => handleFileChange("linkedin", e)}
+        />
+        <input
+          type="file"
+          accept="application/pdf"
+          ref={resumeInputRef}
+          className="hidden"
+          onChange={(e) => handleFileChange("resume", e)}
+        />
+
         <div className="mt-4 flex flex-col sm:flex-row gap-2">
           <Button
             className="flex-1"
-            onClick={() => onOptimize?.(selected)}
+            onClick={() => onOptimize?.(buildSelectedPayload())}
             disabled={selected.length === 0}
           >
             Start Optimized Assessment

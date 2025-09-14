@@ -405,14 +405,26 @@ class ApiService {
   // ==================== DATA IMPORT METHODS ====================
 
   /**
-   * Connect and import LinkedIn data
+   * Upload and parse LinkedIn profile PDF
+   * @param {File} file - LinkedIn profile file uploaded by user
    * @returns {Promise<Object>} Parsed LinkedIn data
    */
-  async connectLinkedIn(payload = {}) {
-    return this.request('/data/import/linkedin', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+  async uploadLinkedInData(file) {
+    try {
+      const formData = new FormData();
+      if (file) formData.append('file', file);
+      const headers = this.sessionToken
+        ? { Authorization: `Bearer ${this.sessionToken}` }
+        : {};
+      const res = await fetch(`${API_BASE_URL}/data/import/linkedin`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      return this.handleResponse(res);
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
   /**
