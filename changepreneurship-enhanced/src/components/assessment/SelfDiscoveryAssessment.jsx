@@ -171,6 +171,7 @@ const SelfDiscoveryAssessment = () => {
     updateResponse,
     updateProgress,
     completePhase,
+    updatePhase,
     calculateArchetype,
   } = useAssessment();
 
@@ -463,13 +464,22 @@ const SelfDiscoveryAssessment = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Previous
         </Button>
-        <Button
-          onClick={nextSection}
-          disabled={currentSectionIndex === sections.length - 1}
-        >
-          Next
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
+        {currentSectionIndex === sections.length - 1 ? (
+          <Button
+            onClick={() => {
+              completePhase("self-discovery");
+              updatePhase("idea-discovery");
+            }}
+          >
+            Next Phase
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        ) : (
+          <Button onClick={nextSection}>
+            Next
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        )}
       </div>
     </div>
   );
