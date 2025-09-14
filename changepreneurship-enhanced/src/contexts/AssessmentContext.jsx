@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 // Initial state with all seven assessment phases
 const initialState = {
-  currentPhase: "self-discovery",
+  currentPhase: null,
   assessmentData: {
     "self-discovery": {
       completed: false,
@@ -402,8 +402,11 @@ export function AssessmentProvider({ children }) {
 
   // Action creators
   const updatePhase = (phase) => {
-    if (validatePhase(phase))
+    if (phase === null) {
+      dispatch({ type: ACTIONS.UPDATE_PHASE, payload: null });
+    } else if (validatePhase(phase)) {
       dispatch({ type: ACTIONS.UPDATE_PHASE, payload: phase });
+    }
   };
   const updateResponse = (phase, questionId, answer, section = "general") => {
     if (validatePhase(phase)) {
@@ -446,7 +449,7 @@ export function AssessmentProvider({ children }) {
   };
 
   // Archetype (condensed to match your file)
-  const generateRecommendations = (archetype, responses) => {
+  const generateRecommendations = (archetype) => {
     return {
       businessTypes: ENTREPRENEUR_ARCHETYPES[archetype].examples,
       nextSteps: [

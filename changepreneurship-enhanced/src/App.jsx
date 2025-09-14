@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   HashRouter as Router,
   Routes,
@@ -15,12 +15,6 @@ import {
 } from "@/components/ui/card.jsx";
 import { Progress } from "@/components/ui/progress.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs.jsx";
 import {
   User,
   Lightbulb,
@@ -70,7 +64,8 @@ import NavBar from "./components/NavBar";
 import PhasePage from "./pages/PhasePage.jsx";
 
 const AssessmentPage = () => {
-  const { assessmentData, currentPhase, updatePhase } = useAssessment();
+  const { assessmentData, updatePhase } = useAssessment();
+  const [selectedPhase, setSelectedPhase] = useState(null);
 
   // Check for URL parameters to set initial phase
   useEffect(() => {
@@ -88,7 +83,9 @@ const AssessmentPage = () => {
           "business-development",
           "business-prototype-testing",
         ];
-        updatePhase(phaseIds[phaseNumber - 1]);
+        const phaseId = phaseIds[phaseNumber - 1];
+        setSelectedPhase(phaseId);
+        updatePhase(phaseId);
       }
     }
   }, [updatePhase]);
@@ -168,9 +165,19 @@ const AssessmentPage = () => {
     },
   ];
 
-  const currentPhaseIndex = phases.findIndex((p) => p.id === currentPhase);
+  const currentPhaseIndex = phases.findIndex((p) => p.id === selectedPhase);
   const currentPhaseData = phases[currentPhaseIndex];
   const CurrentComponent = currentPhaseData?.component;
+
+  const handlePhaseSelect = (phaseId) => {
+    setSelectedPhase(phaseId);
+    updatePhase(phaseId);
+  };
+
+  const handleBackToPhases = () => {
+    setSelectedPhase(null);
+    updatePhase(null);
+  };
 
   const calculateProgress = () => {
     const completedPhases = phases.filter(
@@ -193,98 +200,108 @@ const AssessmentPage = () => {
           </p>
         </div>
 
-        {/* Progress Overview */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Compass className="h-5 w-5" />
-              Your Journey Progress
-            </CardTitle>
-            <CardDescription>
-              Complete all seven phases to unlock your personalized business
-              development roadmap
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
+        {/* Phase Selection or Current Assessment */}
+        {!CurrentComponent ? (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Compass className="h-5 w-5" />
+                Your Journey Progress
+              </CardTitle>
+              <CardDescription>
+                Complete all seven phases to unlock your personalized business
+                development roadmap
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
                 {phases.map((phase) => {
-                const Icon = phase.icon;
-                const isCompleted =
-                  assessmentData[phase.id]?.completed || false;
-                const isCurrent = phase.id === currentPhase;
-                const isAccessible = true; // All phases accessible for testing
+                  const Icon = phase.icon;
+                  const isCompleted =
+                    assessmentData[phase.id]?.completed || false;
+                  const isCurrent = phase.id === selectedPhase;
+                  const isAccessible = true; // All phases accessible for testing
 
-                return (
-                  <Card
-                    key={phase.id}
-                    className={`relative overflow-hidden transition-all duration-300 ${
-                      isCurrent ? "ring-2 ring-primary" : ""
-                    } ${
-                      isAccessible
-                        ? "cursor-pointer hover:shadow-lg"
-                        : "opacity-50"
-                    }`}
-                    onClick={() => isAccessible && updatePhase(phase.id)}
-                  >
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${phase.color} opacity-10`}
-                    />
-                    <CardContent className="p-4 relative">
-                      <div className="flex items-center justify-between mb-2">
-                        <Icon className="h-6 w-6 text-primary" />
-                        {isCompleted && (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        )}
-                      </div>
-                      <h3 className="font-semibold text-sm mb-1">
-                        {phase.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                        {phase.description}
-                      </p>
-                      <div className="space-y-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {phase.category}
-                        </Badge>
-                        <p className="text-xs text-muted-foreground">
-                          {phase.duration}
+                  return (
+                    <Card
+                      key={phase.id}
+                      className={`relative overflow-hidden transition-all duration-300 ${
+                        isCurrent ? "ring-2 ring-primary" : ""
+                      } ${
+                        isAccessible
+                          ? "cursor-pointer hover:shadow-lg"
+                          : "opacity-50"
+                      }`}
+                      onClick={() => isAccessible && handlePhaseSelect(phase.id)}
+                    >
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-br ${phase.color} opacity-10`}
+                      />
+                      <CardContent className="p-4 relative">
+                        <div className="flex items-center justify-between mb-2">
+                          <Icon className="h-6 w-6 text-primary" />
+                          {isCompleted && (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          )}
+                        </div>
+                        <h3 className="font-semibold text-sm mb-1">
+                          {phase.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                          {phase.description}
                         </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Overall Progress</span>
-                <Badge variant="outline">{calculateProgress()}%</Badge>
+                        <div className="space-y-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {phase.category}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">
+                            {phase.duration}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
-              <Progress value={calculateProgress()} className="flex-1 mx-4" />
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Current Assessment */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {currentPhaseData && (
-                <currentPhaseData.icon className="h-5 w-5" />
-              )}
-              {currentPhaseData?.title}
-            </CardTitle>
-            <CardDescription>{currentPhaseData?.description}</CardDescription>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{currentPhaseData?.category}</Badge>
-              <span className="text-sm text-muted-foreground">
-                Phase {currentPhaseIndex + 1} of {phases.length}
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent>{CurrentComponent && <CurrentComponent />}</CardContent>
-        </Card>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Overall Progress</span>
+                  <Badge variant="outline">{calculateProgress()}%</Badge>
+                </div>
+                <Progress value={calculateProgress()} className="flex-1 mx-4" />
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              className="mb-4"
+              onClick={handleBackToPhases}
+            >
+              ← Back to phases
+            </Button>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {currentPhaseData && (
+                    <currentPhaseData.icon className="h-5 w-5" />
+                  )}
+                  {currentPhaseData?.title}
+                </CardTitle>
+                <CardDescription>{currentPhaseData?.description}</CardDescription>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{currentPhaseData?.category}</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Phase {currentPhaseIndex + 1} of {phases.length}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>{CurrentComponent && <CurrentComponent />}</CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );
