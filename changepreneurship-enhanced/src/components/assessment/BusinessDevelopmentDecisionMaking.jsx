@@ -39,7 +39,7 @@ import {
 import { useAssessment } from "../../contexts/AssessmentContext";
 
 const BusinessDevelopmentDecisionMaking = () => {
-  const { assessmentData, updateAssessmentData } = useAssessment();
+  const { assessmentData, updateAssessmentData, completePhase, updatePhase } = useAssessment();
   const [currentSection, setCurrentSection] = useState(0);
   const [sectionData, setSectionData] = useState({
     strategicDecisionMatrix: {
@@ -1077,14 +1077,24 @@ const BusinessDevelopmentDecisionMaking = () => {
         >
           Previous Section
         </Button>
-        <Button
-          onClick={() =>
-            setCurrentSection(Math.min(sections.length - 1, currentSection + 1))
-          }
-          disabled={currentSection === sections.length - 1}
-        >
-          Next Section
-        </Button>
+        {currentSection === sections.length - 1 ? (
+          <Button
+            onClick={() => {
+              completePhase('business-development')
+              updatePhase('business-prototype-testing')
+            }}
+          >
+            Next Phase
+          </Button>
+        ) : (
+          <Button
+            onClick={() =>
+              setCurrentSection(Math.min(sections.length - 1, currentSection + 1))
+            }
+          >
+            Next Section
+          </Button>
+        )}
       </div>
     </div>
   );

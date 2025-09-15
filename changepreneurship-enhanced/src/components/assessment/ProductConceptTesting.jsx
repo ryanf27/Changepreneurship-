@@ -33,7 +33,7 @@ import {
 import { useAssessment } from "../../contexts/AssessmentContext";
 
 const ProductConceptTesting = () => {
-  const { assessmentData, updateAssessmentData } = useAssessment();
+  const { assessmentData, updateAssessmentData, completePhase, updatePhase } = useAssessment();
   const [currentSection, setCurrentSection] = useState(0);
 
   const [sectionData, setSectionData] = useState({
@@ -878,14 +878,24 @@ const ProductConceptTesting = () => {
         >
           Previous Section
         </Button>
-        <Button
-          onClick={() =>
-            setCurrentSection(Math.min(sections.length - 1, currentSection + 1))
-          }
-          disabled={currentSection === sections.length - 1}
-        >
-          Next Section
-        </Button>
+        {currentSection === sections.length - 1 ? (
+          <Button
+            onClick={() => {
+              completePhase('product-concept-testing')
+              updatePhase('business-development')
+            }}
+          >
+            Next Phase
+          </Button>
+        ) : (
+          <Button
+            onClick={() =>
+              setCurrentSection(Math.min(sections.length - 1, currentSection + 1))
+            }
+          >
+            Next Section
+          </Button>
+        )}
       </div>
     </div>
   );

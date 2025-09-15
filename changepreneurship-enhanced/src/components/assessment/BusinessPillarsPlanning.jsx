@@ -41,11 +41,12 @@ import {
 import { useAssessment } from '../../contexts/AssessmentContext'
 
 const BusinessPillarsPlanning = () => {
-  const { 
-    assessmentData, 
-    updateResponse, 
-    updateProgress, 
-    completePhase 
+  const {
+    assessmentData,
+    updateResponse,
+    updateProgress,
+    completePhase,
+    updatePhase
   } = useAssessment()
   
   const [currentSection, setCurrentSection] = useState('customer-segmentation')
@@ -242,21 +243,30 @@ const BusinessPillarsPlanning = () => {
 
       {/* Navigation Buttons */}
       <div className="flex justify-between">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={previousSection}
           disabled={currentSectionIndex === 0}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Previous
         </Button>
-        <Button 
-          onClick={nextSection}
-          disabled={currentSectionIndex === sections.length - 1}
-        >
-          Next
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
+        {currentSectionIndex === sections.length - 1 ? (
+          <Button
+            onClick={() => {
+              completePhase('business-pillars')
+              updatePhase('product-concept-testing')
+            }}
+          >
+            Next Phase
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        ) : (
+          <Button onClick={nextSection}>
+            Next
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        )}
       </div>
     </div>
   )

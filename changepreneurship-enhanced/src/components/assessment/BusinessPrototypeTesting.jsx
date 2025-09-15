@@ -48,7 +48,7 @@ import {
 import { useAssessment } from "../../contexts/AssessmentContext";
 
 const BusinessPrototypeTesting = () => {
-  const { assessmentData, updateAssessmentData } = useAssessment();
+  const { assessmentData, updateAssessmentData, completePhase, updatePhase } = useAssessment();
   const [currentSection, setCurrentSection] = useState(0);
   const [sectionData, setSectionData] = useState({
     customerValueProposition: {
@@ -2289,14 +2289,24 @@ const BusinessPrototypeTesting = () => {
         >
           Previous Section
         </Button>
-        <Button
-          onClick={() =>
-            setCurrentSection(Math.min(sections.length - 1, currentSection + 1))
-          }
-          disabled={currentSection === sections.length - 1}
-        >
-          Next Section
-        </Button>
+        {currentSection === sections.length - 1 ? (
+          <Button
+            onClick={() => {
+              completePhase('business-prototype-testing')
+              updatePhase(null)
+            }}
+          >
+            Next Phase
+          </Button>
+        ) : (
+          <Button
+            onClick={() =>
+              setCurrentSection(Math.min(sections.length - 1, currentSection + 1))
+            }
+          >
+            Next Section
+          </Button>
+        )}
       </div>
     </div>
   );
