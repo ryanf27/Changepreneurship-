@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
-import json
 
 from src.models.assessment import db, Assessment, AssessmentResponse, EntrepreneurProfile
 from src.utils.auth import verify_session_token
@@ -187,7 +186,11 @@ def save_response(assessment_id):
         
         if existing_response:
             # Update existing response
-            existing_response.response_value = json.dumps(response_value) if isinstance(response_value, (dict, list)) else str(response_value)
+            existing_response.set_response_value(response_value)
+            if response_type:
+                existing_response.response_type = response_type
+            if question_text:
+                existing_response.question_text = question_text
             existing_response.updated_at = datetime.utcnow()
         else:
             # Create new response
