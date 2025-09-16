@@ -238,7 +238,12 @@ def update_progress(assessment_id):
         assessment_data = data.get('assessment_data', {})
         
         if progress_percentage is not None:
-            assessment.progress_percentage = max(0, min(100, float(progress_percentage)))
+            try:
+                progress_value = float(progress_percentage)
+            except (TypeError, ValueError):
+                return jsonify({'error': 'Invalid progress_percentage. Must be a numeric value.'}), 400
+
+            assessment.progress_percentage = max(0, min(100, progress_value))
         
         if is_completed:
             assessment.is_completed = True
