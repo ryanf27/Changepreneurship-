@@ -40,7 +40,7 @@ const IdeaDiscoveryAssessment = () => {
   const [currentSection, setCurrentSection] = useState('core-alignment')
   const [sectionProgress, setSectionProgress] = useState({})
   
-  const ideaDiscoveryData = assessmentData['idea-discovery'] || {}
+  const ideaDiscoveryData = assessmentData['idea_discovery'] || {}
   const responses = ideaDiscoveryData.responses || {}
 
   // Assessment sections configuration
@@ -126,16 +126,16 @@ const IdeaDiscoveryAssessment = () => {
     
     // Update overall progress
     const overallProgress = calculateOverallProgress()
-    updateProgress('idea-discovery', overallProgress)
+    updateProgress('idea_discovery', overallProgress)
     
     // Complete phase if all sections are done
     if (overallProgress >= 100 && !ideaDiscoveryData.completed) {
-      completePhase('idea-discovery')
+      completePhase('idea_discovery')
     }
   }, [responses])
 
   const handleResponse = (questionId, answer) => {
-    updateResponse('idea-discovery', questionId, answer, currentSection)
+    updateResponse('idea_discovery', questionId, answer, currentSection)
   }
 
   const nextSection = () => {
@@ -228,8 +228,8 @@ const IdeaDiscoveryAssessment = () => {
         {currentSectionIndex === sections.length - 1 ? (
           <Button
             onClick={() => {
-              completePhase("idea-discovery");
-              updatePhase("market-research");
+              completePhase("idea_discovery");
+              updatePhase("market_research");
             }}
           >
             Next Phase

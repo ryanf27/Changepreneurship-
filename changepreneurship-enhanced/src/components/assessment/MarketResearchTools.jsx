@@ -44,7 +44,7 @@ const MarketResearchTools = () => {
   const [currentSection, setCurrentSection] = useState('competitive-analysis')
   const [sectionProgress, setSectionProgress] = useState({})
   
-  const marketResearchData = assessmentData['market-research'] || {}
+  const marketResearchData = assessmentData['market_research'] || {}
   const responses = marketResearchData.responses || {}
 
   // Assessment sections configuration
@@ -130,16 +130,16 @@ const MarketResearchTools = () => {
     
     // Update overall progress
     const overallProgress = calculateOverallProgress()
-    updateProgress('market-research', overallProgress)
+    updateProgress('market_research', overallProgress)
     
     // Complete phase if all sections are done
     if (overallProgress >= 100 && !marketResearchData.completed) {
-      completePhase('market-research')
+      completePhase('market_research')
     }
   }, [responses])
 
   const handleResponse = (questionId, answer) => {
-    updateResponse('market-research', questionId, answer, currentSection)
+    updateResponse('market_research', questionId, answer, currentSection)
   }
 
   const nextSection = () => {
@@ -237,8 +237,8 @@ const MarketResearchTools = () => {
         {currentSectionIndex === sections.length - 1 ? (
           <Button
             onClick={() => {
-              completePhase('market-research')
-              updatePhase('business-pillars')
+              completePhase('market_research')
+              updatePhase('business_pillars')
             }}
           >
             Next Phase

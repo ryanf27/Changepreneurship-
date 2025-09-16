@@ -30,13 +30,13 @@ const UserDashboard = () => {
 
   // Phase definitions for the 7-part framework
   const phases = [
-    { id: 'self-discovery', name: 'Self Discovery', duration: '60-90 min', category: 'Foundation' },
-    { id: 'idea-discovery', name: 'Idea Discovery', duration: '90-120 min', category: 'Foundation' },
-    { id: 'market-research', name: 'Market Research', duration: '2-3 weeks', category: 'Foundation' },
-    { id: 'business-pillars', name: 'Business Pillars', duration: '1-2 weeks', category: 'Foundation' },
-    { id: 'product-concept-testing', name: 'Product Concept Testing', duration: '3-4 days', category: 'Implementation' },
-    { id: 'business-development', name: 'Business Development', duration: '1-2 weeks', category: 'Implementation' },
-    { id: 'business-prototype-testing', name: 'Business Prototype Testing', duration: '2-4 weeks', category: 'Implementation' }
+    { id: 'self_discovery', name: 'Self Discovery', duration: '60-90 min', category: 'Foundation' },
+    { id: 'idea_discovery', name: 'Idea Discovery', duration: '90-120 min', category: 'Foundation' },
+    { id: 'market_research', name: 'Market Research', duration: '2-3 weeks', category: 'Foundation' },
+    { id: 'business_pillars', name: 'Business Pillars', duration: '1-2 weeks', category: 'Foundation' },
+    { id: 'product_concept_testing', name: 'Product Concept Testing', duration: '3-4 days', category: 'Implementation' },
+    { id: 'business_development', name: 'Business Development', duration: '1-2 weeks', category: 'Implementation' },
+    { id: 'business_prototype_testing', name: 'Business Prototype Testing', duration: '2-4 weeks', category: 'Implementation' }
   ]
 
   useEffect(() => {
@@ -104,7 +104,7 @@ const UserDashboard = () => {
     if (completedCount >= 7) achievements.push({ name: 'Journey Complete', description: 'Completed the entire assessment', icon: '🏆' })
     
     // Check for specific achievements
-    if (assessmentData['self-discovery']?.archetype) {
+    if (assessmentData['self_discovery']?.archetype) {
       achievements.push({ name: 'Self-Aware', description: 'Discovered your entrepreneur archetype', icon: '🧠' })
     }
     
@@ -391,11 +391,11 @@ const UserDashboard = () => {
                   <CardTitle className="text-white">Entrepreneur Profile</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {assessmentData['self-discovery']?.archetype ? (
+                  {assessmentData['self_discovery']?.archetype ? (
                     <div className="space-y-4">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-orange-600">
-                          {assessmentData['self-discovery'].archetype.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          {assessmentData['self_discovery'].archetype.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </div>
                         <p className="text-gray-400 mt-2">Your Entrepreneur Archetype</p>
                       </div>

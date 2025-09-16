@@ -4,21 +4,21 @@ import React, { createContext, useContext, useReducer, useEffect } from "react";
 const initialState = {
   currentPhase: null,
   assessmentData: {
-    "self-discovery": {
+    "self_discovery": {
       completed: false,
       progress: 0,
       responses: {},
       archetype: null,
       insights: {},
     },
-    "idea-discovery": {
+    "idea_discovery": {
       completed: false,
       progress: 0,
       responses: {},
       opportunities: [],
       selectedIdeas: [],
     },
-    "market-research": {
+    "market_research": {
       completed: false,
       progress: 0,
       responses: {},
@@ -27,7 +27,7 @@ const initialState = {
       targetMarket: {},
       marketSize: {},
     },
-    "business-pillars": {
+    "business_pillars": {
       completed: false,
       progress: 0,
       responses: {},
@@ -36,7 +36,7 @@ const initialState = {
       valueProposition: {},
       revenueModel: {},
     },
-    "product-concept-testing": {
+    "product_concept_testing": {
       completed: false,
       progress: 0,
       responses: {},
@@ -45,7 +45,7 @@ const initialState = {
       productValidation: {},
       pricingStrategy: {},
     },
-    "business-development": {
+    "business_development": {
       completed: false,
       progress: 0,
       responses: {},
@@ -54,7 +54,7 @@ const initialState = {
       partnerships: {},
       growthStrategy: {},
     },
-    "business-prototype-testing": {
+    "business_prototype_testing": {
       completed: false,
       progress: 0,
       responses: {},
@@ -174,8 +174,8 @@ function assessmentReducer(state, action) {
         ...state,
         assessmentData: {
           ...state.assessmentData,
-          "self-discovery": {
-            ...state.assessmentData["self-discovery"],
+          "self_discovery": {
+            ...state.assessmentData["self_discovery"],
             archetype: action.payload.archetype,
             insights: action.payload.insights,
           },
@@ -187,10 +187,10 @@ function assessmentReducer(state, action) {
         ...state,
         assessmentData: {
           ...state.assessmentData,
-          "idea-discovery": {
-            ...state.assessmentData["idea-discovery"],
+          "idea_discovery": {
+            ...state.assessmentData["idea_discovery"],
             opportunities: [
-              ...state.assessmentData["idea-discovery"].opportunities,
+              ...state.assessmentData["idea_discovery"].opportunities,
               action.payload,
             ],
           },
@@ -335,13 +335,13 @@ export const ENTREPRENEUR_ARCHETYPES = {
 // Phase validation helper
 const validatePhase = (phase) => {
   const validPhases = [
-    "self-discovery",
-    "idea-discovery",
-    "market-research",
-    "business-pillars",
-    "product-concept-testing",
-    "business-development",
-    "business-prototype-testing",
+    "self_discovery",
+    "idea_discovery",
+    "market_research",
+    "business_pillars",
+    "product_concept_testing",
+    "business_development",
+    "business_prototype_testing",
   ];
   if (!validPhases.includes(phase)) {
     console.warn(
@@ -533,23 +533,23 @@ export function AssessmentProvider({ children }) {
     validatePhase(phase) ? state.assessmentData[phase] || null : null;
   const getAllPhasesCompleted = () =>
     [
-      "self-discovery",
-      "idea-discovery",
-      "market-research",
-      "business-pillars",
-      "product-concept-testing",
-      "business-development",
-      "business-prototype-testing",
+      "self_discovery",
+      "idea_discovery",
+      "market_research",
+      "business_pillars",
+      "product_concept_testing",
+      "business_development",
+      "business_prototype_testing",
     ].every((phase) => state.assessmentData[phase]?.completed === true);
   const getOverallProgress = () => {
     const phases = [
-      "self-discovery",
-      "idea-discovery",
-      "market-research",
-      "business-pillars",
-      "product-concept-testing",
-      "business-development",
-      "business-prototype-testing",
+      "self_discovery",
+      "idea_discovery",
+      "market_research",
+      "business_pillars",
+      "product_concept_testing",
+      "business_development",
+      "business_prototype_testing",
     ];
     const total = phases.reduce(
       (sum, phase) => sum + (state.assessmentData[phase]?.progress || 0),

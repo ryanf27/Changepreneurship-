@@ -292,7 +292,7 @@ const BusinessPrototypeTesting = () => {
 
   // Load existing data
   useEffect(() => {
-    const existingData = assessmentData["business-prototype-testing"] || {};
+    const existingData = assessmentData["business_prototype_testing"] || {};
     if (Object.keys(existingData).length > 0) {
       setSectionData({ ...sectionData, ...existingData });
     }
@@ -300,7 +300,7 @@ const BusinessPrototypeTesting = () => {
 
   // Save data when it changes
   useEffect(() => {
-    updateAssessmentData("business-prototype-testing", sectionData);
+    updateAssessmentData("business_prototype_testing", sectionData);
   }, [sectionData]);
 
   // Calculate completion percentage
@@ -2292,7 +2292,7 @@ const BusinessPrototypeTesting = () => {
         {currentSection === sections.length - 1 ? (
           <Button
             onClick={() => {
-              completePhase('business-prototype-testing')
+              completePhase('business_prototype_testing')
               updatePhase(null)
             }}
           >

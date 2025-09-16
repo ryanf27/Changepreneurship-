@@ -224,7 +224,7 @@ const ProductConceptTesting = () => {
 
   // Load existing data (once)
   useEffect(() => {
-    const existingData = assessmentData["product-concept-testing"] || {};
+    const existingData = assessmentData["product_concept_testing"] || {};
     if (Object.keys(existingData).length > 0) {
       setSectionData((prev) => ({ ...prev, ...existingData }));
     }
@@ -236,7 +236,7 @@ const ProductConceptTesting = () => {
   useEffect(() => {
     const serialized = JSON.stringify(sectionData);
     if (serialized !== lastSavedRef.current) {
-      updateAssessmentData("product-concept-testing", sectionData);
+      updateAssessmentData("product_concept_testing", sectionData);
       lastSavedRef.current = serialized;
     }
   }, [sectionData, updateAssessmentData]);
@@ -881,8 +881,8 @@ const ProductConceptTesting = () => {
         {currentSection === sections.length - 1 ? (
           <Button
             onClick={() => {
-              completePhase('product-concept-testing')
-              updatePhase('business-development')
+              completePhase('product_concept_testing')
+              updatePhase('business_development')
             }}
           >
             Next Phase

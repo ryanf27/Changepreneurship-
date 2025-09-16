@@ -32,7 +32,7 @@ const ProgressTracker = ({
 }) => {
   const phases = [
     {
-      id: "self-discovery",
+      id: "self_discovery",
       title: "Self Discovery",
       description: "Core motivation, values, and vision",
       icon: Heart,
@@ -47,7 +47,7 @@ const ProgressTracker = ({
       ],
     },
     {
-      id: "idea-discovery",
+      id: "idea_discovery",
       title: "Idea Discovery",
       description: "Business ideas and opportunities",
       icon: Lightbulb,
@@ -61,7 +61,7 @@ const ProgressTracker = ({
       ],
     },
     {
-      id: "market-research",
+      id: "market_research",
       title: "Market Research",
       description: "Industry analysis and validation",
       icon: Target,
@@ -73,7 +73,7 @@ const ProgressTracker = ({
       ],
     },
     {
-      id: "business-pillars",
+      id: "business_pillars",
       title: "Business Pillars",
       description: "Foundation and strategy planning",
       icon: Star,
@@ -94,7 +94,7 @@ const ProgressTracker = ({
       sections: ["concept-testing", "prototype-validation", "user-feedback"],
     },
     {
-      id: "business-development",
+      id: "business_development",
       title: "Business Development",
       description: "Growth and scaling strategies",
       icon: TrendingUp,

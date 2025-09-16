@@ -181,7 +181,7 @@ const SelfDiscoveryAssessment = () => {
   const [isOptimized, setIsOptimized] = useState(false);
   const [connectedSources, setConnectedSources] = useState([]);
 
-  const selfDiscoveryData = assessmentData["self-discovery"] || {};
+  const selfDiscoveryData = assessmentData["self_discovery"] || {};
   const responses = selfDiscoveryData.responses || {};
 
   // Assessment sections configuration
@@ -245,7 +245,7 @@ const SelfDiscoveryAssessment = () => {
   // Handle response updates (✅ argument order fix)
   const handleResponse = (questionId, answer) => {
     // updateResponse(phase, questionId, answer, section)
-    updateResponse("self-discovery", questionId, answer, currentSection);
+    updateResponse("self_discovery", questionId, answer, currentSection);
 
     // Update section progress
     const sectionQuestions = currentSectionData.questions;
@@ -268,7 +268,7 @@ const SelfDiscoveryAssessment = () => {
       [currentSection]: progress,
     }).filter((p) => p === 100).length;
     const overall = Math.round((completedSections / totalSections) * 100);
-    updateProgress("self-discovery", overall);
+    updateProgress("self_discovery", overall);
   };
 
   // Handle data import optimization using imported data
@@ -304,7 +304,7 @@ const SelfDiscoveryAssessment = () => {
           importedData
         );
         if (pre) {
-          updateResponse("self-discovery", q.id, pre.value, section.id);
+          updateResponse("self_discovery", q.id, pre.value, section.id);
         }
       });
     });
@@ -467,8 +467,8 @@ const SelfDiscoveryAssessment = () => {
         {currentSectionIndex === sections.length - 1 ? (
           <Button
             onClick={() => {
-              completePhase("self-discovery");
-              updatePhase("idea-discovery");
+              completePhase("self_discovery");
+              updatePhase("idea_discovery");
             }}
           >
             Next Phase

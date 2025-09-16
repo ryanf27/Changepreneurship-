@@ -228,7 +228,7 @@ const BusinessDevelopmentDecisionMaking = () => {
 
   // Load existing data
   useEffect(() => {
-    const existing = assessmentData["business-development"] || {};
+    const existing = assessmentData["business_development"] || {};
     if (Object.keys(existing).length > 0) {
       setSectionData((prev) => ({ ...prev, ...existing }));
     }
@@ -240,7 +240,7 @@ const BusinessDevelopmentDecisionMaking = () => {
   useEffect(() => {
     const serialized = JSON.stringify(sectionData);
     if (serialized !== lastSavedRef.current) {
-      updateAssessmentData("business-development", sectionData);
+      updateAssessmentData("business_development", sectionData);
       lastSavedRef.current = serialized;
     }
   }, [sectionData, updateAssessmentData]);
@@ -1080,8 +1080,8 @@ const BusinessDevelopmentDecisionMaking = () => {
         {currentSection === sections.length - 1 ? (
           <Button
             onClick={() => {
-              completePhase('business-development')
-              updatePhase('business-prototype-testing')
+              completePhase('business_development')
+              updatePhase('business_prototype_testing')
             }}
           >
             Next Phase

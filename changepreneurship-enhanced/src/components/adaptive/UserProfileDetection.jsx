@@ -77,7 +77,7 @@ export default function UserProfileDetection() {
   // Auto-trigger profile detection when enough responses
   useEffect(() => {
     if (responseCount >= 5 && !isProfileDetected()) {
-      processAdaptiveLogic('self-discovery')
+      processAdaptiveLogic('self_discovery')
     }
   }, [responseCount, isProfileDetected, processAdaptiveLogic])
 
