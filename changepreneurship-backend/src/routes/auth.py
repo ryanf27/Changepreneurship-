@@ -76,13 +76,14 @@ def register():
                 return jsonify({'error': 'Email already registered'}), 409
 
         password_hash = generate_password_hash(password)
-        user = User(username=username, email=email, password_hash=password_hash)
-        db.session.add(user)
-        db.session.commit()
 
-        profile = EntrepreneurProfile(user_id=user.id)
-        db.session.add(profile)
-        db.session.commit()
+        with db.session.begin():
+            user = User(username=username, email=email, password_hash=password_hash)
+            db.session.add(user)
+            db.session.flush()  # Ensure user ID is available for the profile
+
+            profile = EntrepreneurProfile(user_id=user.id)
+            db.session.add(profile)
 
         session = create_user_session(user.id)
 
