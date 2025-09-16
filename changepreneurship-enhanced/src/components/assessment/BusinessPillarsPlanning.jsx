@@ -52,7 +52,7 @@ const BusinessPillarsPlanning = () => {
   const [currentSection, setCurrentSection] = useState('customer-segmentation')
   const [sectionProgress, setSectionProgress] = useState({})
   
-  const businessPillarsData = assessmentData['business-pillars'] || {}
+  const businessPillarsData = assessmentData['business_pillars'] || {}
   const responses = businessPillarsData.responses || {}
 
   // Assessment sections configuration
@@ -146,16 +146,16 @@ const BusinessPillarsPlanning = () => {
     
     // Update overall progress
     const overallProgress = calculateOverallProgress()
-    updateProgress('business-pillars', overallProgress)
+    updateProgress('business_pillars', overallProgress)
     
     // Complete phase if all sections are done
     if (overallProgress >= 100 && !businessPillarsData.completed) {
-      completePhase('business-pillars')
+      completePhase('business_pillars')
     }
   }, [responses])
 
   const handleResponse = (questionId, answer) => {
-    updateResponse('business-pillars', questionId, answer, currentSection)
+    updateResponse('business_pillars', questionId, answer, currentSection)
   }
 
   const nextSection = () => {
@@ -254,8 +254,8 @@ const BusinessPillarsPlanning = () => {
         {currentSectionIndex === sections.length - 1 ? (
           <Button
             onClick={() => {
-              completePhase('business-pillars')
-              updatePhase('product-concept-testing')
+              completePhase('business_pillars')
+              updatePhase('product_concept_testing')
             }}
           >
             Next Phase

@@ -365,7 +365,7 @@ export default function QuestionOptimizationDemo() {
                         { value: 'risk_averse', label: 'Risk Averse' }
                       ]
                     }}
-                    phase="self-discovery"
+                    phase="self_discovery"
                     showAdaptiveFeatures={true}
                   />
                 </div>
@@ -380,7 +380,7 @@ export default function QuestionOptimizationDemo() {
                       text: 'What is your industry experience level?',
                       type: 'pre_populated'
                     }}
-                    phase="self-discovery"
+                    phase="self_discovery"
                     showAdaptiveFeatures={true}
                   />
                 </div>

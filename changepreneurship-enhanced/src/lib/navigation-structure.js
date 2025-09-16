@@ -13,7 +13,7 @@ export async function getNavigationStructure() {
   }));
   return [
     {
-      id: 'self-discovery',
+      id: 'self_discovery',
       code: 1,
       order: 1,
       title: 'Self Discovery',

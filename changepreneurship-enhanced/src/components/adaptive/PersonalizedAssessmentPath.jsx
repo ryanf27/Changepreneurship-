@@ -43,7 +43,7 @@ export default function PersonalizedAssessmentPath() {
   // Assessment phases with adaptive data
   const phases = [
     {
-      id: 'self-discovery',
+      id: 'self_discovery',
       name: 'Self Discovery',
       description: 'Understanding your entrepreneurial personality and motivations',
       icon: Users,
@@ -51,7 +51,7 @@ export default function PersonalizedAssessmentPath() {
       estimatedTime: '60-90 min'
     },
     {
-      id: 'idea-discovery',
+      id: 'idea_discovery',
       name: 'Idea Discovery',
       description: 'Identifying and validating business opportunities',
       icon: Lightbulb,
@@ -59,7 +59,7 @@ export default function PersonalizedAssessmentPath() {
       estimatedTime: '90-120 min'
     },
     {
-      id: 'market-research',
+      id: 'market_research',
       name: 'Market Research',
       description: 'Analyzing market conditions and competitive landscape',
       icon: BarChart3,
@@ -67,7 +67,7 @@ export default function PersonalizedAssessmentPath() {
       estimatedTime: '2-3 weeks'
     },
     {
-      id: 'business-pillars',
+      id: 'business_pillars',
       name: 'Business Pillars',
       description: 'Building comprehensive business foundation',
       icon: Target,
@@ -75,7 +75,7 @@ export default function PersonalizedAssessmentPath() {
       estimatedTime: '1-2 weeks'
     },
     {
-      id: 'product-concept-testing',
+      id: 'product_concept_testing',
       name: 'Product Concept Testing',
       description: 'Validating product concepts with target market',
       icon: Star,
@@ -83,7 +83,7 @@ export default function PersonalizedAssessmentPath() {
       estimatedTime: '1-2 weeks'
     },
     {
-      id: 'business-development',
+      id: 'business_development',
       name: 'Business Development',
       description: 'Strategic business development and decision making',
       icon: TrendingUp,
@@ -91,7 +91,7 @@ export default function PersonalizedAssessmentPath() {
       estimatedTime: '2-3 weeks'
     },
     {
-      id: 'business-prototype-testing',
+      id: 'business_prototype_testing',
       name: 'Business Prototype Testing',
       description: 'Testing business prototypes and market readiness',
       icon: Award,

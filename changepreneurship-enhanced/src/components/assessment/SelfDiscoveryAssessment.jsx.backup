@@ -35,7 +35,7 @@ const SelfDiscoveryAssessment = () => {
   const [currentSection, setCurrentSection] = useState('motivation')
   const [sectionProgress, setSectionProgress] = useState({})
   
-  const selfDiscoveryData = assessmentData['self-discovery'] || {}
+  const selfDiscoveryData = assessmentData['self_discovery'] || {}
   const responses = selfDiscoveryData.responses || {}
 
   // Assessment sections configuration
@@ -162,17 +162,17 @@ const SelfDiscoveryAssessment = () => {
     
     // Update overall progress
     const overallProgress = calculateOverallProgress()
-    updateProgress('self-discovery', overallProgress)
+    updateProgress('self_discovery', overallProgress)
     
     // Complete phase if all sections are done
     if (overallProgress >= 100 && !selfDiscoveryData.completed) {
-      completePhase('self-discovery')
+      completePhase('self_discovery')
       calculateArchetype(responses)
     }
   }, [responses])
 
   const handleResponse = (questionId, answer) => {
-    updateResponse('self-discovery', questionId, answer, currentSection)
+    updateResponse('self_discovery', questionId, answer, currentSection)
   }
 
   const nextSection = () => {

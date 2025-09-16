@@ -75,13 +75,13 @@ const AssessmentPage = () => {
       const phaseNumber = parseInt(phaseParam);
       if (phaseNumber >= 1 && phaseNumber <= 7) {
         const phaseIds = [
-          "self-discovery",
-          "idea-discovery",
-          "market-research",
-          "business-pillars",
-          "product-concept-testing",
-          "business-development",
-          "business-prototype-testing",
+          "self_discovery",
+          "idea_discovery",
+          "market_research",
+          "business_pillars",
+          "product_concept_testing",
+          "business_development",
+          "business_prototype_testing",
         ];
         const phaseId = phaseIds[phaseNumber - 1];
         setSelectedPhase(phaseId);
@@ -92,7 +92,7 @@ const AssessmentPage = () => {
 
   const phases = [
     {
-      id: "self-discovery",
+      id: "self_discovery",
       title: "Self Discovery",
       description:
         "Understand your entrepreneurial personality and motivations",
@@ -103,7 +103,7 @@ const AssessmentPage = () => {
       component: SelfDiscoveryAssessment,
     },
     {
-      id: "idea-discovery",
+      id: "idea_discovery",
       title: "Idea Discovery",
       description: "Transform insights into concrete business opportunities",
       icon: Lightbulb,
@@ -113,7 +113,7 @@ const AssessmentPage = () => {
       component: IdeaDiscoveryAssessment,
     },
     {
-      id: "market-research",
+      id: "market_research",
       title: "Market Research",
       description: "Validate assumptions and understand competitive dynamics",
       icon: Search,
@@ -123,7 +123,7 @@ const AssessmentPage = () => {
       component: MarketResearchTools,
     },
     {
-      id: "business-pillars",
+      id: "business_pillars",
       title: "Business Pillars",
       description: "Define foundational elements for strategic planning",
       icon: Building,
@@ -133,7 +133,7 @@ const AssessmentPage = () => {
       component: BusinessPillarsPlanning,
     },
     {
-      id: "product-concept-testing",
+      id: "product_concept_testing",
       title: "Product Concept Testing",
       description: "Validate product concepts with real customer feedback",
       icon: TestTube,
@@ -143,7 +143,7 @@ const AssessmentPage = () => {
       component: ProductConceptTesting,
     },
     {
-      id: "business-development",
+      id: "business_development",
       title: "Business Development",
       description: "Strategic decision-making and resource optimization",
       icon: Settings,
@@ -153,7 +153,7 @@ const AssessmentPage = () => {
       component: BusinessDevelopmentDecisionMaking,
     },
     {
-      id: "business-prototype-testing",
+      id: "business_prototype_testing",
       title: "Business Prototype Testing",
       description:
         "Complete business model validation in real market conditions",

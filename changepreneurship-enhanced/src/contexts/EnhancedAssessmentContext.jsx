@@ -11,9 +11,9 @@ import AdaptiveAssessmentEngine, {
 // Enhanced initial state with adaptive features
 const initialState = {
   // Core assessment data
-  currentPhase: 'self-discovery',
+  currentPhase: 'self_discovery',
   assessmentData: {
-    'self-discovery': {
+    'self_discovery': {
       completed: false,
       progress: 0,
       responses: {},
@@ -23,7 +23,7 @@ const initialState = {
       skippedQuestions: [],
       prePopulatedAnswers: {}
     },
-    'idea-discovery': {
+    'idea_discovery': {
       completed: false,
       progress: 0,
       responses: {},
@@ -33,7 +33,7 @@ const initialState = {
       skippedQuestions: [],
       prePopulatedAnswers: {}
     },
-    'market-research': {
+    'market_research': {
       completed: false,
       progress: 0,
       responses: {},
@@ -43,7 +43,7 @@ const initialState = {
       skippedQuestions: [],
       prePopulatedAnswers: {}
     },
-    'business-pillars': {
+    'business_pillars': {
       completed: false,
       progress: 0,
       responses: {},
@@ -53,7 +53,7 @@ const initialState = {
       skippedQuestions: [],
       prePopulatedAnswers: {}
     },
-    'product-concept-testing': {
+    'product_concept_testing': {
       completed: false,
       progress: 0,
       responses: {},
@@ -62,7 +62,7 @@ const initialState = {
       skippedQuestions: [],
       prePopulatedAnswers: {}
     },
-    'business-development': {
+    'business_development': {
       completed: false,
       progress: 0,
       responses: {},
@@ -71,7 +71,7 @@ const initialState = {
       skippedQuestions: [],
       prePopulatedAnswers: {}
     },
-    'business-prototype-testing': {
+    'business_prototype_testing': {
       completed: false,
       progress: 0,
       responses: {},
@@ -319,8 +319,8 @@ function enhancedAssessmentReducer(state, action) {
         ...state,
         assessmentData: {
           ...state.assessmentData,
-          'self-discovery': {
-            ...state.assessmentData['self-discovery'],
+          'self_discovery': {
+            ...state.assessmentData['self_discovery'],
             archetype: action.payload.archetype,
             insights: action.payload.insights
           }
@@ -332,9 +332,9 @@ function enhancedAssessmentReducer(state, action) {
         ...state,
         assessmentData: {
           ...state.assessmentData,
-          'idea-discovery': {
-            ...state.assessmentData['idea-discovery'],
-            opportunities: [...state.assessmentData['idea-discovery'].opportunities, action.payload]
+          'idea_discovery': {
+            ...state.assessmentData['idea_discovery'],
+            opportunities: [...state.assessmentData['idea_discovery'].opportunities, action.payload]
           }
         }
       }

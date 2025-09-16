@@ -9,13 +9,13 @@ import {
 import { Progress } from "@/components/ui/progress.jsx";
 
 const phases = [
-  { id: "self-discovery", name: "Self Discovery" },
-  { id: "idea-discovery", name: "Idea Discovery" },
-  { id: "market-research", name: "Market Research" },
-  { id: "business-pillars", name: "Business Pillars" },
-  { id: "product-concept-testing", name: "Product Concept Testing" },
-  { id: "business-development", name: "Business Development" },
-  { id: "business-prototype-testing", name: "Business Prototype Testing" },
+  { id: "self_discovery", name: "Self Discovery" },
+  { id: "idea_discovery", name: "Idea Discovery" },
+  { id: "market_research", name: "Market Research" },
+  { id: "business_pillars", name: "Business Pillars" },
+  { id: "product_concept_testing", name: "Product Concept Testing" },
+  { id: "business_development", name: "Business Development" },
+  { id: "business_prototype_testing", name: "Business Prototype Testing" },
 ];
 
 const AssessmentHistory = () => {

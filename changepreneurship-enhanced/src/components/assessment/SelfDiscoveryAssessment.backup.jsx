@@ -127,7 +127,7 @@ const SelfDiscoveryAssessment = () => {
   const [isOptimized, setIsOptimized] = useState(false)
   const [connectedSources, setConnectedSources] = useState([])
   
-  const selfDiscoveryData = assessmentData['self-discovery'] || {}
+  const selfDiscoveryData = assessmentData['self_discovery'] || {}
   const responses = selfDiscoveryData.responses || {}
 
   // Assessment sections configuration
@@ -189,7 +189,7 @@ const SelfDiscoveryAssessment = () => {
   // Handle response updates (✅ argument order fix)
   const handleResponse = (questionId, answer) => {
     // updateResponse(phase, questionId, answer, section)
-    updateResponse('self-discovery', questionId, answer, currentSection)
+    updateResponse('self_discovery', questionId, answer, currentSection)
     
     // Update section progress
     const sectionQuestions = currentSectionData.questions
@@ -209,7 +209,7 @@ const SelfDiscoveryAssessment = () => {
       [currentSection]: progress
     }).filter(p => p === 100).length
     const overall = Math.round((completedSections / totalSections) * 100)
-    updateProgress('self-discovery', overall)
+    updateProgress('self_discovery', overall)
   }
 
   // Handle data import optimization (✅ fixed argument order)
@@ -221,11 +221,11 @@ const SelfDiscoveryAssessment = () => {
     // Simulate pre-population
     if (sources.includes('linkedin')) {
       // motivation → questionId: 'primary-motivation'
-      updateResponse('self-discovery', 'primary-motivation', 'solve-problems', 'motivation')
+      updateResponse('self_discovery', 'primary-motivation', 'solve-problems', 'motivation')
     }
     if (sources.includes('financial')) {
       // confidence → questionId: 'vision-confidence' (number 7)
-      updateResponse('self-discovery', 'vision-confidence', 7, 'confidence')
+      updateResponse('self_discovery', 'vision-confidence', 7, 'confidence')
     }
   }
 
