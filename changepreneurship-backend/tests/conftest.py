@@ -13,6 +13,7 @@ if SRC_PATH not in sys.path:
 
 from src.models.assessment import db
 from src.routes.auth import auth_bp
+from src.routes.assessment import assessment_bp
 
 
 @pytest.fixture
@@ -27,6 +28,7 @@ def app():
 
     db.init_app(app)
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(assessment_bp, url_prefix="/api/assessment")
 
     with app.app_context():
         db.create_all()
