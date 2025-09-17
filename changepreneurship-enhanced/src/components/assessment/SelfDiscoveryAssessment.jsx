@@ -189,6 +189,7 @@ const SelfDiscoveryAssessment = () => {
     {
       id: "motivation",
       title: "Core Motivation & Why",
+      navLabel: "Core Motivation",
       description: "Understand your fundamental drive for entrepreneurship",
       icon: Heart,
       duration: "10-15 minutes",
@@ -197,6 +198,7 @@ const SelfDiscoveryAssessment = () => {
     {
       id: "life-impact",
       title: "Life Impact Assessment",
+      navLabel: "Life Impact",
       description: "How entrepreneurship fits into your life priorities",
       icon: Target,
       duration: "15-20 minutes",
@@ -205,6 +207,7 @@ const SelfDiscoveryAssessment = () => {
     {
       id: "values",
       title: "Values & Priorities",
+      navLabel: "Values & Priorities",
       description: "Identify core values to guide business decisions",
       icon: Star,
       duration: "10-15 minutes",
@@ -213,6 +216,7 @@ const SelfDiscoveryAssessment = () => {
     {
       id: "vision",
       title: "Future Vision",
+      navLabel: "Future Vision",
       description: "Define your long-term vision and goals",
       icon: Compass,
       duration: "15-20 minutes",
@@ -221,6 +225,7 @@ const SelfDiscoveryAssessment = () => {
     {
       id: "confidence",
       title: "Belief & Confidence",
+      navLabel: "Belief & Confidence",
       description: "Assess your confidence in achieving your vision",
       icon: Brain,
       duration: "10-15 minutes",
@@ -229,6 +234,7 @@ const SelfDiscoveryAssessment = () => {
     {
       id: "results",
       title: "Your Entrepreneur Archetype",
+      navLabel: "Archetype Results",
       description: "Discover your unique entrepreneur profile",
       icon: TrendingUp,
       duration: "5 minutes",
@@ -390,14 +396,23 @@ const SelfDiscoveryAssessment = () => {
                       key={section.id}
                       value={section.id}
                       className="flex flex-col items-center gap-1 p-2"
+                      title={section.title}
                     >
                       <IconComponent
                         className={`h-4 w-4 ${
                           isCompleted ? "text-green-500" : ""
                         }`}
                       />
-                      <span className="text-xs">
-                        {section.title.split(" ")[0]}
+                      <span
+                        className="text-xs text-center leading-tight max-w-[6rem]"
+                        style={{
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {section.navLabel || section.title}
                       </span>
                       {isCompleted && (
                         <CheckCircle className="h-3 w-3 text-green-500" />
