@@ -6,7 +6,7 @@ const NavigationContext = createContext();
 
 export const NavigationProvider = ({ children }) => {
   const [structure, setStructure] = useState([]);
-  const [path, setPath] = useState({ phase: 1, tab: 1, section: 1, question: 1 });
+  const [path, setPath] = useState(null);
   const [progress, setProgress] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('questionProgress')) || {};
@@ -21,14 +21,38 @@ export const NavigationProvider = ({ children }) => {
 
   useEffect(() => {
     if (!structure.length) return;
-    const saved = fromCode(localStorage.getItem('lastLocation') || '');
-    const normalized = normalizePath(saved, structure);
+    const raw = localStorage.getItem('lastLocation');
+    let target = {};
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          target = parsed;
+        } else {
+          target = fromCode(raw);
+        }
+      } catch {
+        target = fromCode(raw);
+      }
+    }
+    const normalized = normalizePath(target, structure);
     setPath(normalized);
   }, [structure]);
 
   useEffect(() => {
-    if (!structure.length) return;
-    localStorage.setItem('lastLocation', toCode(path));
+    if (!structure.length || !path) return;
+    const payload = {
+      phaseId: path.phaseId,
+      tabId: path.tabId,
+      sectionId: path.sectionId,
+      questionId: path.questionId,
+      phase: path.phase,
+      tab: path.tab,
+      section: path.section,
+      question: path.question,
+      code: toCode(path),
+    };
+    localStorage.setItem('lastLocation', JSON.stringify(payload));
   }, [path, structure]);
 
   useEffect(() => {
@@ -36,6 +60,7 @@ export const NavigationProvider = ({ children }) => {
   }, [progress]);
 
   const navigateTo = (next) => {
+    if (!structure.length) return;
     setPath(normalizePath(next, structure));
   };
 
