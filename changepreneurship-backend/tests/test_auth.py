@@ -1,4 +1,4 @@
-from src.models.assessment import User
+from src.models.assessment import User, EntrepreneurProfile
 from src.routes import auth as auth_module
 
 
@@ -20,3 +20,4 @@ def test_register_rolls_back_user_on_profile_failure(app, client, monkeypatch):
 
     with app.app_context():
         assert User.query.count() == 0
+        assert EntrepreneurProfile.query.count() == 0
