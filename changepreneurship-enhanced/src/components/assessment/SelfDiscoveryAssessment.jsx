@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button.jsx";
 import {
   Card,
@@ -172,7 +172,6 @@ const SelfDiscoveryAssessment = () => {
     updateProgress,
     completePhase,
     updatePhase,
-    calculateArchetype,
   } = useAssessment();
 
   const [currentSection, setCurrentSection] = useState("motivation");
@@ -182,59 +181,103 @@ const SelfDiscoveryAssessment = () => {
   const [connectedSources, setConnectedSources] = useState([]);
 
   const selfDiscoveryData = assessmentData["self_discovery"] || {};
-  const responses = selfDiscoveryData.responses || {};
+  const responses = useMemo(
+    () => selfDiscoveryData.responses || {},
+    [selfDiscoveryData.responses]
+  );
 
   // Assessment sections configuration
-  const sections = [
-    {
-      id: "motivation",
-      title: "Core Motivation & Why",
-      description: "Understand your fundamental drive for entrepreneurship",
-      icon: Heart,
-      duration: "10-15 minutes",
-      questions: motivationQuestions,
-    },
-    {
-      id: "life-impact",
-      title: "Life Impact Assessment",
-      description: "How entrepreneurship fits into your life priorities",
-      icon: Target,
-      duration: "15-20 minutes",
-      questions: lifeImpactQuestions,
-    },
-    {
-      id: "values",
-      title: "Values & Priorities",
-      description: "Identify core values to guide business decisions",
-      icon: Star,
-      duration: "10-15 minutes",
-      questions: valuesQuestions,
-    },
-    {
-      id: "vision",
-      title: "Future Vision",
-      description: "Define your long-term vision and goals",
-      icon: Compass,
-      duration: "15-20 minutes",
-      questions: visionQuestions,
-    },
-    {
-      id: "confidence",
-      title: "Belief & Confidence",
-      description: "Assess your confidence in achieving your vision",
-      icon: Brain,
-      duration: "10-15 minutes",
-      questions: confidenceQuestions,
-    },
-    {
-      id: "results",
-      title: "Your Entrepreneur Archetype",
-      description: "Discover your unique entrepreneur profile",
-      icon: TrendingUp,
-      duration: "5 minutes",
-      questions: [],
-    },
-  ];
+  const sections = useMemo(
+    () => [
+      {
+        id: "motivation",
+        title: "Core Motivation & Why",
+        description: "Understand your fundamental drive for entrepreneurship",
+        icon: Heart,
+        duration: "10-15 minutes",
+        questions: motivationQuestions,
+      },
+      {
+        id: "life-impact",
+        title: "Life Impact Assessment",
+        description: "How entrepreneurship fits into your life priorities",
+        icon: Target,
+        duration: "15-20 minutes",
+        questions: lifeImpactQuestions,
+      },
+      {
+        id: "values",
+        title: "Values & Priorities",
+        description: "Identify core values to guide business decisions",
+        icon: Star,
+        duration: "10-15 minutes",
+        questions: valuesQuestions,
+      },
+      {
+        id: "vision",
+        title: "Future Vision",
+        description: "Define your long-term vision and goals",
+        icon: Compass,
+        duration: "15-20 minutes",
+        questions: visionQuestions,
+      },
+      {
+        id: "confidence",
+        title: "Belief & Confidence",
+        description: "Assess your confidence in achieving your vision",
+        icon: Brain,
+        duration: "10-15 minutes",
+        questions: confidenceQuestions,
+      },
+      {
+        id: "results",
+        title: "Your Entrepreneur Archetype",
+        description: "Discover your unique entrepreneur profile",
+        icon: TrendingUp,
+        duration: "5 minutes",
+        questions: [],
+      },
+    ],
+    []
+  );
+
+  useEffect(() => {
+    const computedProgress = sections.reduce((acc, section) => {
+      if (!section.questions?.length) {
+        return acc;
+      }
+
+      const sectionResponses = responses[section.id] || {};
+      const answered = section.questions.reduce((count, question) => {
+        const value = sectionResponses[question.id];
+
+        if (
+          value === undefined ||
+          value === null ||
+          (typeof value === "string" && value.trim() === "") ||
+          (Array.isArray(value) && value.length === 0) ||
+          (typeof value === "object" &&
+            !Array.isArray(value) &&
+            Object.keys(value).length === 0)
+        ) {
+          return count;
+        }
+
+        return count + 1;
+      }, 0);
+
+      const totalQuestions = section.questions.length;
+      acc[section.id] =
+        totalQuestions > 0 ? Math.round((answered / totalQuestions) * 100) : 0;
+
+      return acc;
+    }, {});
+
+    setSectionProgress((prev) => ({
+      ...prev,
+      ...computedProgress,
+    }));
+  }, [responses, sections]);
 
   const currentSectionIndex = sections.findIndex(
     (s) => s.id === currentSection
@@ -381,26 +424,45 @@ const SelfDiscoveryAssessment = () => {
           <div className="space-y-4">
             {/* Section Navigation */}
             <Tabs value={currentSection} onValueChange={setCurrentSection}>
-              <TabsList className="grid grid-cols-6 w-full">
+              <TabsList className="grid grid-cols-6 w-full gap-2">
                 {sections.map((section) => {
                   const IconComponent = section.icon;
-                  const isCompleted = sectionProgress[section.id] === 100;
+                  const progress = Math.round(sectionProgress[section.id] ?? 0);
+                  const isCompleted = progress === 100;
+                  const showProgress = section.questions.length > 0;
                   return (
                     <TabsTrigger
                       key={section.id}
                       value={section.id}
-                      className="flex flex-col items-center gap-1 p-2"
+                      className="flex flex-col items-center gap-1 p-2 min-w-0"
                     >
-                      <IconComponent
-                        className={`h-4 w-4 ${
-                          isCompleted ? "text-green-500" : ""
-                        }`}
-                      />
-                      <span className="text-xs">
+                      <div className="flex items-center gap-1">
+                        <IconComponent
+                          className={`h-4 w-4 ${
+                            isCompleted ? "text-green-500" : ""
+                          }`}
+                        />
+                        {isCompleted && (
+                          <CheckCircle className="h-3 w-3 text-green-500" />
+                        )}
+                      </div>
+                      <span className="text-xs text-center">
                         {section.title.split(" ")[0]}
                       </span>
-                      {isCompleted && (
-                        <CheckCircle className="h-3 w-3 text-green-500" />
+                      {showProgress && (
+                        <div className="w-full flex flex-col items-center gap-1">
+                          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={`${
+                                isCompleted ? "bg-green-500" : "bg-primary/60"
+                              } h-full rounded-full transition-all duration-300`}
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-medium text-muted-foreground">
+                            {progress}%
+                          </span>
+                        </div>
                       )}
                     </TabsTrigger>
                   );
