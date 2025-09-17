@@ -77,13 +77,13 @@ def register():
 
         password_hash = generate_password_hash(password)
 
-        with db.session.begin():
-            user = User(username=username, email=email, password_hash=password_hash)
-            db.session.add(user)
-            db.session.flush()  # Ensure user ID is available for the profile
+        user = User(username=username, email=email, password_hash=password_hash)
+        db.session.add(user)
+        db.session.flush()  # Ensure user ID is available for the profile
 
-            profile = EntrepreneurProfile(user_id=user.id)
-            db.session.add(profile)
+        profile = EntrepreneurProfile(user_id=user.id)
+        db.session.add(profile)
+        db.session.commit()
 
         session = create_user_session(user.id)
 
