@@ -39,15 +39,23 @@ const QuestionNavigator = () => {
   }, [params, structure, navigateTo]);
 
   useEffect(() => {
-    if (!structure.length) return;
+    if (!structure.length || !path) return;
     const long = `/phase/${path.phase}/tab/${path.tab}/section/${path.section}/question/${path.question}`;
     navigate(long, { replace: true });
   }, [path, structure, navigate]);
 
-  const phaseNode = structure.find((p) => p.code === path.phase);
-  const tabNode = phaseNode?.tabs.find((t) => t.code === path.tab);
-  const sectionNode = tabNode?.sections.find((s) => s.code === path.section);
-  const questionNode = sectionNode?.questions.find((q) => q.code === path.question);
+  const phaseNode =
+    structure.find((p) => p.id === path?.phaseId) ||
+    structure.find((p) => p.code === path?.phase);
+  const tabNode =
+    phaseNode?.tabs.find((t) => t.id === path?.tabId) ||
+    phaseNode?.tabs.find((t) => t.code === path?.tab);
+  const sectionNode =
+    tabNode?.sections.find((s) => s.id === path?.sectionId) ||
+    tabNode?.sections.find((s) => s.code === path?.section);
+  const questionNode =
+    sectionNode?.questions.find((q) => q.id === path?.questionId) ||
+    sectionNode?.questions.find((q) => q.code === path?.question);
 
   useEffect(() => {
     if (questionNode) markVisited(questionNode.id);
@@ -57,7 +65,8 @@ const QuestionNavigator = () => {
     if (!sectionNode) return;
     let mounted = true;
     import('../../components/assessment/ComprehensiveQuestionBank.jsx').then(({ SELF_DISCOVERY_QUESTIONS }) => {
-      const data = SELF_DISCOVERY_QUESTIONS[sectionNode.id] || [];
+      const sectionData = SELF_DISCOVERY_QUESTIONS[sectionNode.id];
+      const data = sectionData?.questions || [];
       if (mounted) setQuestions(data);
     });
     return () => {
@@ -85,8 +94,12 @@ const QuestionNavigator = () => {
   const nextQuestion = getNextQuestion(path, structure);
   const prevQuestion = getPrevQuestion(path, structure);
 
-  const sectionAnswered = sectionNode?.questions.filter((q) => progress[q.id]).length || 0;
-  const sectionTotal = sectionNode?.questions.length || 0;
+  if (!structure.length || !path || !phaseNode || !tabNode || !sectionNode || !questionNode) {
+    return null;
+  }
+
+  const sectionAnswered = sectionNode.questions.filter((q) => progress[q.id]).length;
+  const sectionTotal = sectionNode.questions.length;
   const tabCounts = tabNode
     ? tabNode.sections.reduce(
         (acc, s) => {
@@ -110,22 +123,24 @@ const QuestionNavigator = () => {
       )
     : { answered: 0, total: 0 };
 
-  if (!structure.length) return null;
-
   return (
     <div className="space-y-4">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink onClick={() => navigateTo({ phase: path.phase })}>{phaseNode.title}</BreadcrumbLink>
+            <BreadcrumbLink onClick={() => navigateTo({ phaseId: path.phaseId })}>{phaseNode.title}</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink onClick={() => navigateTo({ phase: path.phase, tab: path.tab })}>{tabNode.title}</BreadcrumbLink>
+            <BreadcrumbLink onClick={() => navigateTo({ phaseId: path.phaseId, tabId: path.tabId })}>{tabNode.title}</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink onClick={() => navigateTo({ phase: path.phase, tab: path.tab, section: path.section })}>{sectionNode.title}</BreadcrumbLink>
+            <BreadcrumbLink onClick={() => navigateTo({
+              phaseId: path.phaseId,
+              tabId: path.tabId,
+              sectionId: path.sectionId,
+            })}>{sectionNode.title}</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>

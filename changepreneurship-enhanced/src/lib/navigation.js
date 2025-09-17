@@ -1,163 +1,263 @@
+const SHORT_KEYS = { phase: 'p', tab: 't', section: 's', question: 'q' };
+
+const first = (items) => (items && items.length ? items[0] : undefined);
+
+const isNumeric = (value) =>
+  typeof value === 'number' ||
+  (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value)));
+
+const toNumber = (value) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+  return undefined;
+};
+
+const parseSegment = (segment) => {
+  if (segment === undefined || segment === null || segment === '') {
+    return undefined;
+  }
+  if (isNumeric(segment)) {
+    return toNumber(segment);
+  }
+  return segment;
+};
+
+const buildPath = (phaseNode, tabNode, sectionNode, questionNode) => ({
+  phase: phaseNode?.code,
+  phaseId: phaseNode?.id,
+  tab: tabNode?.code,
+  tabId: tabNode?.id,
+  section: sectionNode?.code,
+  sectionId: sectionNode?.id,
+  question: questionNode?.code,
+  questionId: questionNode?.id,
+});
+
+const resolveNode = (nodes = [], path = {}, key) => {
+  if (!nodes.length) return undefined;
+  const shortKey = SHORT_KEYS[key];
+  const explicitId = path?.[`${key}Id`];
+  const direct = path?.[key];
+  const short = shortKey ? path?.[shortKey] : undefined;
+
+  const idCandidates = [
+    explicitId,
+    typeof direct === 'string' && !isNumeric(direct) ? direct : undefined,
+    typeof short === 'string' && !isNumeric(short) ? short : undefined,
+  ].filter(Boolean);
+
+  for (const candidate of idCandidates) {
+    const match = nodes.find((node) => node?.id === candidate);
+    if (match) return match;
+  }
+
+  const codeCandidates = [
+    path?.[`${key}Code`],
+    direct,
+    short,
+  ].filter((value) => value !== undefined && value !== null);
+
+  for (const candidate of codeCandidates) {
+    const values = [];
+    if (candidate !== undefined && candidate !== null) {
+      values.push(candidate);
+      const numeric = toNumber(candidate);
+      if (numeric !== undefined) values.push(numeric);
+    }
+
+    for (const value of values) {
+      const match = nodes.find((node) => node?.code === value);
+      if (match) return match;
+    }
+  }
+
+  return nodes[0];
+};
+
+const resolveNormalizedNodes = (normalized, structure) => {
+  const phaseNode =
+    structure.find((phase) => phase.id === normalized.phaseId) ||
+    structure.find((phase) => phase.code === normalized.phase);
+  const tabNode =
+    phaseNode?.tabs.find((tab) => tab.id === normalized.tabId) ||
+    phaseNode?.tabs.find((tab) => tab.code === normalized.tab);
+  const sectionNode =
+    tabNode?.sections.find((section) => section.id === normalized.sectionId) ||
+    tabNode?.sections.find((section) => section.code === normalized.section);
+  const questionNode =
+    sectionNode?.questions.find((question) => question.id === normalized.questionId) ||
+    sectionNode?.questions.find((question) => question.code === normalized.question);
+
+  return { phaseNode, tabNode, sectionNode, questionNode };
+};
+
 export function toCode({ phase, tab, section, question }) {
   return [phase, tab, section, question].join('.');
 }
 
 export function fromCode(code) {
-  const [phase = 1, tab = 1, section = 1, question = 1] =
-    code?.split('.').map((n) => parseInt(n, 10)) || [];
-  return { phase, tab, section, question };
-}
-
-// structure nodes have shape { code:number, order:number, id:string, tabs:[...], sections:[...], questions:[...] }
-export function normalizePath(path, structure) {
-  const phase =
-    structure.find((p) => p.code === (path.phase || path.p)) || structure[0];
-  const tab =
-    phase.tabs.find((t) => t.code === (path.tab || path.t)) || phase.tabs[0];
-  const section =
-    tab.sections.find((s) => s.code === (path.section || path.s)) || tab.sections[0];
-  const question =
-    section.questions.find((q) => q.code === (path.question || path.q)) ||
-    section.questions[0];
+  if (!code && code !== 0) {
+    return {};
+  }
+  if (typeof code !== 'string') {
+    return code ?? {};
+  }
+  const [phase, tab, section, question] = code.split('.');
   return {
-    phase: phase.code,
-    tab: tab.code,
-    section: section.code,
-    question: question.code,
+    phase: parseSegment(phase),
+    tab: parseSegment(tab),
+    section: parseSegment(section),
+    question: parseSegment(question),
   };
 }
 
+export function normalizePath(path = {}, structure = []) {
+  if (!structure.length) return {};
+  const phaseNode = resolveNode(structure, path, 'phase') || structure[0];
+  const tabNode = resolveNode(phaseNode?.tabs, path, 'tab') || first(phaseNode?.tabs);
+  const sectionNode =
+    resolveNode(tabNode?.sections, path, 'section') || first(tabNode?.sections);
+  const questionNode =
+    resolveNode(sectionNode?.questions, path, 'question') || first(sectionNode?.questions);
+
+  if (!phaseNode || !tabNode || !sectionNode || !questionNode) {
+    return {};
+  }
+
+  return buildPath(phaseNode, tabNode, sectionNode, questionNode);
+}
+
 export function getNext(path, structure, level = 'question') {
-  const { phase, tab, section, question } = normalizePath(path, structure);
-  const phaseNode = structure.find((p) => p.code === phase);
-  const tabNode = phaseNode.tabs.find((t) => t.code === tab);
-  const sectionNode = tabNode.sections.find((s) => s.code === section);
+  if (!structure.length) return {};
+  const normalized = normalizePath(path, structure);
+  const { phaseNode, tabNode, sectionNode, questionNode } =
+    resolveNormalizedNodes(normalized, structure);
+
+  if (!phaseNode || !tabNode || !sectionNode || !questionNode) {
+    return normalized;
+  }
 
   if (level === 'phase') {
-    const pIndex = structure.findIndex((p) => p.code === phase);
-    if (pIndex < structure.length - 1) {
+    const pIndex = structure.findIndex((phase) => phase.id === phaseNode.id);
+    if (pIndex >= 0 && pIndex < structure.length - 1) {
       const nextPhase = structure[pIndex + 1];
-      const nextTab = nextPhase.tabs[0];
-      const nextSection = nextTab.sections[0];
-      const nextQuestion = nextSection.questions[0];
-      return {
-        phase: nextPhase.code,
-        tab: nextTab.code,
-        section: nextSection.code,
-        question: nextQuestion.code,
-      };
+      const nextTab = first(nextPhase?.tabs);
+      const nextSection = first(nextTab?.sections);
+      const nextQuestion = first(nextSection?.questions);
+      if (nextPhase && nextTab && nextSection && nextQuestion) {
+        return buildPath(nextPhase, nextTab, nextSection, nextQuestion);
+      }
     }
-    return { phase, tab, section, question };
+    return normalized;
   }
 
   if (level === 'tab') {
-    const tIndex = phaseNode.tabs.findIndex((t) => t.code === tab);
-    if (tIndex < phaseNode.tabs.length - 1) {
-      const nextTab = phaseNode.tabs[tIndex + 1];
-      const nextSection = nextTab.sections[0];
-      return {
-        phase,
-        tab: nextTab.code,
-        section: nextSection.code,
-        question: nextSection.questions[0].code,
-      };
+    const tabs = phaseNode.tabs || [];
+    const tIndex = tabs.findIndex((tab) => tab.id === tabNode.id);
+    if (tIndex >= 0 && tIndex < tabs.length - 1) {
+      const nextTab = tabs[tIndex + 1];
+      const nextSection = first(nextTab?.sections);
+      const nextQuestion = first(nextSection?.questions);
+      if (nextTab && nextSection && nextQuestion) {
+        return buildPath(phaseNode, nextTab, nextSection, nextQuestion);
+      }
     }
-    return getNext({ phase, tab, section, question }, structure, 'phase');
+    return getNext(normalized, structure, 'phase');
   }
 
   if (level === 'section') {
-    const sIndex = tabNode.sections.findIndex((s) => s.code === section);
-    if (sIndex < tabNode.sections.length - 1) {
-      const nextSection = tabNode.sections[sIndex + 1];
-      return {
-        phase,
-        tab,
-        section: nextSection.code,
-        question: nextSection.questions[0].code,
-      };
+    const sections = tabNode.sections || [];
+    const sIndex = sections.findIndex((section) => section.id === sectionNode.id);
+    if (sIndex >= 0 && sIndex < sections.length - 1) {
+      const nextSection = sections[sIndex + 1];
+      const nextQuestion = first(nextSection?.questions);
+      if (nextSection && nextQuestion) {
+        return buildPath(phaseNode, tabNode, nextSection, nextQuestion);
+      }
     }
-    return getNext({ phase, tab, section, question }, structure, 'tab');
+    return getNext(normalized, structure, 'tab');
   }
 
-  const qIndex = sectionNode.questions.findIndex((q) => q.code === question);
-  if (qIndex < sectionNode.questions.length - 1) {
-    return {
-      phase,
-      tab,
-      section,
-      question: sectionNode.questions[qIndex + 1].code,
-    };
+  const questions = sectionNode.questions || [];
+  const qIndex = questions.findIndex((question) => question.id === questionNode.id);
+  if (qIndex >= 0 && qIndex < questions.length - 1) {
+    const nextQuestion = questions[qIndex + 1];
+    return buildPath(phaseNode, tabNode, sectionNode, nextQuestion);
   }
-  return getNext({ phase, tab, section, question }, structure, 'section');
+
+  return getNext(normalized, structure, 'section');
 }
 
 export function getPrev(path, structure, level = 'question') {
-  const { phase, tab, section, question } = normalizePath(path, structure);
-  const phaseNode = structure.find((p) => p.code === phase);
-  const tabNode = phaseNode.tabs.find((t) => t.code === tab);
-  const sectionNode = tabNode.sections.find((s) => s.code === section);
+  if (!structure.length) return {};
+  const normalized = normalizePath(path, structure);
+  const { phaseNode, tabNode, sectionNode, questionNode } =
+    resolveNormalizedNodes(normalized, structure);
+
+  if (!phaseNode || !tabNode || !sectionNode || !questionNode) {
+    return normalized;
+  }
 
   if (level === 'phase') {
-    const pIndex = structure.findIndex((p) => p.code === phase);
+    const pIndex = structure.findIndex((phase) => phase.id === phaseNode.id);
     if (pIndex > 0) {
       const prevPhase = structure[pIndex - 1];
-      const prevTab = prevPhase.tabs[prevPhase.tabs.length - 1];
-      const prevSection = prevTab.sections[prevTab.sections.length - 1];
-      const prevQuestion =
-        prevSection.questions[prevSection.questions.length - 1];
-      return {
-        phase: prevPhase.code,
-        tab: prevTab.code,
-        section: prevSection.code,
-        question: prevQuestion.code,
-      };
+      const prevTabs = prevPhase.tabs || [];
+      const prevTab = prevTabs[prevTabs.length - 1];
+      const prevSections = prevTab?.sections || [];
+      const prevSection = prevSections[prevSections.length - 1];
+      const prevQuestions = prevSection?.questions || [];
+      const prevQuestion = prevQuestions[prevQuestions.length - 1];
+      if (prevPhase && prevTab && prevSection && prevQuestion) {
+        return buildPath(prevPhase, prevTab, prevSection, prevQuestion);
+      }
     }
-    return { phase, tab, section, question };
+    return normalized;
   }
 
   if (level === 'tab') {
-    const tIndex = phaseNode.tabs.findIndex((t) => t.code === tab);
+    const tabs = phaseNode.tabs || [];
+    const tIndex = tabs.findIndex((tab) => tab.id === tabNode.id);
     if (tIndex > 0) {
-      const prevTab = phaseNode.tabs[tIndex - 1];
-      const prevSection = prevTab.sections[prevTab.sections.length - 1];
-      return {
-        phase,
-        tab: prevTab.code,
-        section: prevSection.code,
-        question: prevSection.questions[prevSection.questions.length - 1].code,
-      };
+      const prevTab = tabs[tIndex - 1];
+      const prevSections = prevTab.sections || [];
+      const prevSection = prevSections[prevSections.length - 1];
+      const prevQuestions = prevSection?.questions || [];
+      const prevQuestion = prevQuestions[prevQuestions.length - 1];
+      if (prevTab && prevSection && prevQuestion) {
+        return buildPath(phaseNode, prevTab, prevSection, prevQuestion);
+      }
     }
-    return getPrev({ phase, tab, section, question }, structure, 'phase');
+    return getPrev(normalized, structure, 'phase');
   }
 
   if (level === 'section') {
-    const sIndex = tabNode.sections.findIndex((s) => s.code === section);
+    const sections = tabNode.sections || [];
+    const sIndex = sections.findIndex((section) => section.id === sectionNode.id);
     if (sIndex > 0) {
-      const prevSection = tabNode.sections[sIndex - 1];
-      return {
-        phase,
-        tab,
-        section: prevSection.code,
-        question:
-          prevSection.questions[prevSection.questions.length - 1].code,
-      };
+      const prevSection = sections[sIndex - 1];
+      const prevQuestions = prevSection.questions || [];
+      const prevQuestion = prevQuestions[prevQuestions.length - 1];
+      if (prevSection && prevQuestion) {
+        return buildPath(phaseNode, tabNode, prevSection, prevQuestion);
+      }
     }
-    return getPrev({ phase, tab, section, question }, structure, 'tab');
+    return getPrev(normalized, structure, 'tab');
   }
 
-  const qIndex = sectionNode.questions.findIndex((q) => q.code === question);
+  const questions = sectionNode.questions || [];
+  const qIndex = questions.findIndex((question) => question.id === questionNode.id);
   if (qIndex > 0) {
-    return {
-      phase,
-      tab,
-      section,
-      question: sectionNode.questions[qIndex - 1].code,
-    };
+    const prevQuestion = questions[qIndex - 1];
+    return buildPath(phaseNode, tabNode, sectionNode, prevQuestion);
   }
-  return getPrev({ phase, tab, section, question }, structure, 'section');
+
+  return getPrev(normalized, structure, 'section');
 }
 
-// Convenience wrappers for specific levels
 export const getNextPhase = (path, structure) => getNext(path, structure, 'phase');
 export const getPrevPhase = (path, structure) => getPrev(path, structure, 'phase');
 export const getNextTab = (path, structure) => getNext(path, structure, 'tab');
@@ -166,4 +266,3 @@ export const getNextSection = (path, structure) => getNext(path, structure, 'sec
 export const getPrevSection = (path, structure) => getPrev(path, structure, 'section');
 export const getNextQuestion = (path, structure) => getNext(path, structure, 'question');
 export const getPrevQuestion = (path, structure) => getPrev(path, structure, 'question');
-
