@@ -1,8 +1,6 @@
-from flask import Blueprint, request, jsonify, session
+import flask
+from flask import Blueprint, request, jsonify
 from datetime import datetime
-import json
-import requests
-import uuid
 
 value_zone_bp = Blueprint('value_zone', __name__)
 
@@ -553,7 +551,7 @@ def analyze_passions():
         validator = ValueZoneValidator()
         analysis = validator.analyze_passions(passion_responses)
 
-        session['passion_analysis'] = analysis
+        flask.session['passion_analysis'] = analysis
 
         return jsonify({"success": True, "data": analysis})
     except Exception as e:
@@ -571,7 +569,7 @@ def analyze_skills():
         validator = ValueZoneValidator()
         analysis = validator.analyze_skills(skill_responses, experience_data)
 
-        session['skill_analysis'] = analysis
+        flask.session['skill_analysis'] = analysis
 
         return jsonify({"success": True, "data": analysis})
     except Exception as e:
@@ -589,7 +587,7 @@ def analyze_market():
         validator = ValueZoneValidator()
         analysis = validator.analyze_market_demand(business_ideas, target_markets)
 
-        session['market_analysis'] = analysis
+        flask.session['market_analysis'] = analysis
 
         return jsonify({"success": True, "data": analysis})
     except Exception as e:
@@ -600,9 +598,9 @@ def analyze_market():
 def find_value_zones():
     """Find value zones intersection"""
     try:
-        passion_analysis = session.get('passion_analysis')
-        skill_analysis = session.get('skill_analysis')
-        market_analysis = session.get('market_analysis')
+        passion_analysis = flask.session.get('passion_analysis')
+        skill_analysis = flask.session.get('skill_analysis')
+        market_analysis = flask.session.get('market_analysis')
 
         if not all([passion_analysis, skill_analysis, market_analysis]):
             return (
@@ -620,7 +618,7 @@ def find_value_zones():
             passion_analysis, skill_analysis, market_analysis
         )
 
-        session['value_zones'] = value_zones
+        flask.session['value_zones'] = value_zones
 
         return jsonify({"success": True, "data": value_zones})
     except Exception as e:
@@ -632,10 +630,10 @@ def get_complete_analysis():
     """Get complete value zone analysis"""
     try:
         complete_analysis = {
-            "passion_analysis": session.get('passion_analysis'),
-            "skill_analysis": session.get('skill_analysis'),
-            "market_analysis": session.get('market_analysis'),
-            "value_zones": session.get('value_zones'),
+            "passion_analysis": flask.session.get('passion_analysis'),
+            "skill_analysis": flask.session.get('skill_analysis'),
+            "market_analysis": flask.session.get('market_analysis'),
+            "value_zones": flask.session.get('value_zones'),
             "analysis_date": datetime.now().isoformat(),
         }
 
